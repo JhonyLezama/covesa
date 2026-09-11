@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.tsx';
+
+@theme {
+  --color-navy: #0C447C;
+  --color-navy-dark: #042C53;
+  --color-navy-light: #1A5A9E;
+  --color-gold: #F2A623;
+  --color-gold-dark: #D4911A;
+  --color-gray-bg: #F5F5F3;
+  --color-gray-text: #2C2C2A;
+  --color-gray-muted: #6B7280;
+  --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  color: var(--color-gray-text);
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}

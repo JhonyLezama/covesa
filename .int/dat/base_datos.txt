@@ -1,0 +1,410 @@
+Buen ojo — justo ahí está la decisión importante: **property_statuses** y **project_statuses** tienen prácticamente los mismos campos (nombre, color, orden). Si los separas en dos tablas idénticas, es redundancia real. Te muestro las dos opciones y cuál recomiendo, y luego los campos completos de cada catálogo.
+
+## Decisión de diseño: ¿tablas separadas o una tabla genérica de estados?
+
+**Opción A — Tablas separadas** (lo que planteamos al inicio)
+❌ Duplicas estructura (`property_statuses` y `project_statuses` son clones)
+❌ Si mañana agregas `lead_statuses` o `referral_statuses`, sigues clonando tablas
+
+**Opción B — Tabla genérica `statuses` con tipo (recomendada)**
+✅ Una sola tabla para todos los estados del sistema, diferenciados por columna `type`
+✅ Escalable: si después necesitas estados de leads o referidos, no creas tabla nueva, solo agregas filas
+✅ Un solo panel de administración para gestionar "Estados" en vez de varios
+
+Esta es la que te recomiendo. Así queda:
+
+## Estructura final de catálogos
+
+**1. `property_types`** (tipos de propiedad — Terreno Comercial, Local Industrial, etc.)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| name | string | "Terreno Comercial" |
+| slug | string, unique | "terreno-comercial" (para URLs) |
+| icon | string, nullable | nombre del ícono (lucide-react) para mostrarlo en cards |
+| description | text, nullable | uso interno/tooltip |
+| is_active | boolean, default true | para desactivar sin borrar (por integridad referencial) |
+| order | integer, default 0 | orden de aparición en filtros |
+| timestamps | | |
+
+**2. `zones`** (ubicaciones — con jerarquía, porque vimos Trujillo, Piura, Sullana como distintos niveles)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| name | string | "Trujillo", "Huanchaco", "Carretera Huanchaco" |
+| slug | string, unique | |
+| parent_id | bigint FK, nullable → zones.id | permite jerarquía: Región → Provincia → Sector |
+| department | string, nullable | "La Libertad", "Piura" — para filtros rápidos sin recorrer el árbol |
+| latitude / longitude | decimal, nullable | para mostrar en mapa (ya vimos que las fichas tienen mapa) |
+| is_active | boolean, default true | |
+| order | integer, default 0 | |
+| timestamps | | |
+
+*Nota: el campo `department` es una excepción intencional a la normalización estricta — se repite para simplificar los filtros del buscador sin tener que recorrer la jerarquía completa en cada query. Es una redundancia controlada y justificada, no accidental.*
+
+**3. `statuses`** (tabla genérica — reemplaza `property_statuses` y `project_statuses`)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| type | enum/string | `property`, `project` (y a futuro: `lead`, `referral`) |
+| name | string | "En venta", "En construcción", "Concluido" |
+| slug | string | "en-venta", "concluido" |
+| color | string | hex, para pintar el badge (naranja, verde, azul como vimos en el PDF) |
+| order | integer, default 0 | |
+| is_active | boolean, default true | |
+| timestamps | | |
+
+Con `unique(['type', 'slug'])` como índice compuesto, para que no se dupliquen estados dentro de un mismo tipo.
+
+## Migraciones de ejemplo
+
+```php
+Schema::create('property_types', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->string('slug')->unique();
+    $table->string('icon')->nullable();
+    $table->text('description')->nullable();
+    $table->boolean('is_active')->default(true);
+    $table->unsignedInteger('order')->default(0);
+    $table->timestamps();
+});
+
+Schema::create('zones', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->string('slug')->unique();
+    $table->foreignId('parent_id')->nullable()->constrained('zones')->nullOnDelete();
+    $table->string('department')->nullable();
+    $table->decimal('latitude', 10, 7)->nullable();
+    $table->decimal('longitude', 10, 7)->nullable();
+    $table->boolean('is_active')->default(true);
+    $table->unsignedInteger('order')->default(0);
+    $table->timestamps();
+});
+
+Schema::create('statuses', function (Blueprint $table) {
+    $table->id();
+    $table->string('type'); // property | project | (futuro: lead, referral)
+    $table->string('name');
+    $table->string('slug');
+    $table->string('color')->default('#0C447C');
+    $table->unsignedInteger('order')->default(0);
+    $table->boolean('is_active')->default(true);
+    $table->timestamps();
+
+    $table->unique(['type', 'slug']);
+});
+```
+
+## Cómo se conectan a `properties` y `projects` (para que quede claro que no es solo teoría)
+
+```php
+Schema::create('properties', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('property_type_id')->constrained();
+    $table->foreignId('zone_id')->constrained();
+    $table->foreignId('status_id')->constrained('statuses'); // status_id, no property_status_id
+    $table->foreignId('project_id')->nullable()->constrained();
+    // ... resto de campos propios de la propiedad
+});
+```
+
+**Regla práctica para no seguir cayendo en redundancia más adelante:** cualquier tabla que solo tenga "nombre + color/orden + on/off" y sirva para clasificar otra entidad, va a `statuses` (si es un estado) o se evalúa si merece su propio catálogo (si tiene lógica propia, como `property_types` que sí tiene ícono y descripción distintos).
+
+
+
+
+Sigamos con `properties` y `projects` completas — estas son las tablas core del sistema, así que vale la pena detallar bien cada campo y por qué está ahí.
+
+## Estrategia de borrado: Soft Deletes
+
+Antes de las tablas, una decisión que afecta a todas: usar `SoftDeletes` en `properties`, `projects`, `blog_posts` y `leads`. Razón práctica: si un asesor "elimina" una propiedad vendida por error, o Google ya indexó una URL, prefieres poder recuperarla o al menos saber que existió, en vez de perder el registro para siempre.
+
+```php
+$table->softDeletes(); // agrega columna deleted_at
+```
+
+## `projects` (proyectos grandes — El Milagro, Hanan del Sol)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| name | string | "Mercado Mayorista Ecológico El Milagro" |
+| slug | string, unique | para la URL `/proyectos/el-milagro` |
+| status_id | FK → statuses | En construcción, En proceso, Concluido |
+| zone_id | FK → zones | |
+| client_name | string, nullable | "Aspromermet" (empresa cliente del proyecto, vimos varios casos) |
+| service_type | string, nullable | "Project Management", "Gestión de Activos" — el servicio que brindan en ese proyecto |
+| featured_image | string, nullable | imagen principal (hero de la landing) |
+| gallery | json, nullable | array de imágenes secundarias del carrusel |
+| video_url | string, nullable | vimos que algunas landings tienen video de fondo |
+| description | text, nullable | *ojo: este campo se reemplaza por `project_translations` — ver abajo* |
+| latitude / longitude | decimal, nullable | ubicación en mapa |
+| is_published | boolean, default false | para trabajar el proyecto en borrador antes de publicarlo |
+| order | integer, default 0 | orden en el listado de proyectos |
+| timestamps + softDeletes | | |
+
+**Nota importante sobre `description`:** como ya definimos multiidioma, el texto real (título de landing, descripción, características del proyecto) **no va en esta tabla**, va en `project_translations`. Esta tabla solo guarda lo que es igual sin importar el idioma (fechas, coordenadas, imágenes, relaciones).
+
+## `project_translations`
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| project_id | FK → projects | |
+| locale | string(2) | "es", "en", "fr" |
+| title | string | título de la landing |
+| subtitle | string, nullable | "Tu oportunidad de hacer crecer tu negocio" |
+| description | text | descripción larga |
+| features | json, nullable | array de características (las vimos como iconos: "Club House Exclusivo", "Seguridad para tu familia") |
+| meta_title / meta_description | string/text, nullable | SEO por idioma |
+
+`unique(['project_id', 'locale'])` para no duplicar idioma en el mismo proyecto.
+
+## `properties` (propiedades individuales — terrenos, locales)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| project_id | FK → projects, nullable | puede pertenecer a un proyecto o ser independiente |
+| property_type_id | FK → property_types | |
+| zone_id | FK → zones | |
+| status_id | FK → statuses | |
+| title | string | "Carretera Huanchaco" — este SÍ puede ir directo aquí si el nombre de la propiedad no cambia por idioma (son nombres propios de lugares) |
+| slug | string, unique | |
+| operation | enum | `venta`, `alquiler` — esto vimos que es distinto al status (una propiedad "en venta" es la operación, "disponible/reservada" es el estado) |
+| area_total | decimal | 6,692.33 |
+| area_unit | string, default 'm2' | por si en algún momento manejan hectáreas |
+| price | decimal, nullable | dejar nullable — vimos que algunas fichas no muestran precio público ("Consultar") |
+| currency | string, default 'USD' | vimos precios en USD (US$ 790.00 x m²) |
+| price_type | enum | `total`, `por_m2` — importante, porque vimos ambos casos en las fichas |
+| lots_available | integer, nullable | "Posibilidad de venta: 4 Lotes" |
+| ideal_for | json, nullable | array de tags: ["Almacenes", "Depósitos", "Talleres mecánicos"] |
+| featured_image | string | |
+| gallery | json, nullable | |
+| latitude / longitude | decimal, nullable | |
+| address | string, nullable | dirección específica |
+| assigned_user_id | FK → users, nullable | el asesor asignado (vimos "María Ángela Contreras" con foto y WhatsApp en la ficha) |
+| is_published | boolean, default false | |
+| is_featured | boolean, default false | para destacarla en el home (las 6 que vimos en portada) |
+| views_count | integer, default 0 | útil para saber qué propiedades generan más interés |
+| timestamps + softDeletes | | |
+
+**Sobre `title` sin tabla de traducción:** decisión consciente — el nombre de una propiedad ("Carretera Huanchaco", "Frente a Tecsup") es un nombre propio de ubicación, no cambia entre idiomas. Solo la descripción y el "ideal para" sí conviene traducir. Por eso:
+
+## `property_translations` (más liviana que la de proyectos)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| property_id | FK → properties | |
+| locale | string(2) | |
+| description | text | descripción del terreno |
+| ideal_for_text | text, nullable | versión en texto libre si no alcanza con tags |
+
+## Punto de diseño a validar contigo: ¿vale la pena tanta granularidad de traducción?
+
+Aquí hay una decisión de costo/beneficio real: traducir la descripción de **cada propiedad individual** a 3 idiomas es trabajo manual recurrente para el cliente (cada vez que suban una propiedad nueva, deben escribir 3 versiones). Dos caminos:
+
+1. **Traducción completa por propiedad** (lo que detallé arriba) — más profesional, más trabajo para ellos día a día
+2. **Solo el contenido institucional y de proyectos se traduce** (Home, Nosotros, Servicios, landings de El Milagro/Hanan del Sol); **las fichas de propiedades individuales quedan solo en español**, ya que un inversionista extranjero interesado normalmente contacta al asesor directamente
+
+Yo recomendaría la opción 2 para no generar fricción operativa al equipo comercial, pero es una decisión de negocio, no solo técnica — vale la pena preguntárselo directamente al cliente antes de programar la tabla `property_translations`.
+
+Sigamos con `leads`, `referrals` y `media` — estas tres son el corazón del "mini-CRM propio" y del sistema de referidos.
+
+## `leads` (todos los formularios del sitio caen aquí)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| source | enum/string | `contacto`, `vende_tu_propiedad`, `landing_proyecto`, `busca_propiedad`, `refiere_y_gana` — de qué formulario vino |
+| property_id | FK → properties, nullable | si el lead viene de una ficha de propiedad específica |
+| project_id | FK → projects, nullable | si viene de una landing de proyecto (El Milagro, Hanan del Sol) |
+| referral_id | FK → referrals, nullable | si este lead fue generado por un referido (ver tabla siguiente) |
+| assigned_user_id | FK → users, nullable | asesor asignado para hacer seguimiento |
+| first_name | string | |
+| last_name | string | |
+| document_type | string, nullable | DNI, RUC, CE — vimos el campo en los formularios |
+| document_number | string, nullable | |
+| email | string | |
+| phone | string | |
+| location | string, nullable | ubicación del interesado (campo que vimos en "Vende o alquila tu propiedad") |
+| message | text, nullable | descripción/mensaje adicional |
+| extra_data | json, nullable | **campos variables según el formulario** — ver nota abajo |
+| attachments | json, nullable | array de rutas de archivos adjuntos (fotos del terreno a vender) |
+| status_id | FK → statuses, nullable | Nuevo, Contactado, En negociación, Ganado, Perdido |
+| accepted_data_policy | boolean, default false | checkbox legal que vimos en los formularios |
+| accepted_marketing_policy | boolean, default false | checkbox de comunicaciones comerciales |
+| notes | text, nullable | notas internas del asesor (no visibles al cliente) |
+| timestamps + softDeletes | | |
+
+**Sobre `extra_data` (json):** noté que cada formulario tiene campos distintos — el de "Vende tu propiedad" pide dirección del terreno, zonificación, precio de venta; el de "El Milagro" pide tipo de puesto y rubro; el de "Hanan del Sol" pide metraje deseado. En vez de crear columnas para cada caso particular (que dejarían la tabla con 30 columnas mayormente vacías), estos campos específicos van en `extra_data` como JSON:
+
+```json
+{
+  "direccion_terreno": "Av. Larco 1525",
+  "zonificacion": "Comercial",
+  "precio_venta": 50000
+}
+```
+
+Esto evita una tabla enorme y rígida, y es flexible si mañana agregan un formulario nuevo con campos distintos sin necesitar una migración.
+
+## `referrals` (Refiere y Gana)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| referrer_user_id | FK → users, nullable | si el que refiere es alguien registrado en el sistema (asesor/afiliado) |
+| referrer_name | string | nombre de quien refiere (por si no está registrado como usuario) |
+| referrer_email | string | |
+| referrer_phone | string | |
+| referred_name | string | nombre del contacto referido |
+| referred_email | string, nullable | |
+| referred_phone | string | |
+| code | string, unique | código único de referido (para tracking, ej. link con `?ref=ABC123`) |
+| status_id | FK → statuses | Pendiente, Contactado, Venta concretada, Comisión pagada |
+| property_id | FK → properties, nullable | si el referido terminó interesado en una propiedad específica |
+| sale_amount | decimal, nullable | monto de la venta concretada (para calcular comisión) |
+| commission_percentage | decimal, default 0 | % acordado |
+| commission_amount | decimal, nullable | calculado: `sale_amount * commission_percentage / 100` |
+| commission_paid_at | timestamp, nullable | |
+| timestamps + softDeletes | | |
+
+**Nota de negocio pendiente de confirmar con el cliente:** el `commission_percentage` — ¿es fijo para todos los referidos, o varía según el tipo de propiedad/monto? Si varía, quizás conviene una tabla `commission_rules` aparte. Por ahora lo dejo como campo simple, ajustable manualmente por un admin al momento de cerrar la venta.
+
+## `media` (gestión centralizada de archivos)
+
+En vez de repetir `featured_image`/`gallery` como JSON en cada tabla (properties, projects, leads), una alternativa más limpia es una tabla polimórfica de media, usando el patrón `morphMany` de Laravel:
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| mediable_id | bigint | ID del modelo relacionado (polimórfico) |
+| mediable_type | string | `Property`, `Project`, `BlogPost`, `Lead` |
+| type | enum | `featured`, `gallery`, `attachment`, `document` |
+| path | string | ruta del archivo en storage |
+| original_name | string, nullable | nombre original al subir |
+| mime_type | string, nullable | |
+| size | integer, nullable | en bytes, útil para validar límites |
+| order | integer, default 0 | orden en la galería |
+| alt_text | string, nullable | para SEO/accesibilidad de imágenes |
+| timestamps | | |
+
+**Aquí hay una decisión de arquitectura importante que quiero que valides:** tienes dos caminos:
+
+1. **JSON simple** (`gallery` como columna json en cada tabla) → más rápido de implementar, pero no puedes hacer analítica sobre archivos ("cuántas imágenes en total", "qué propiedades no tienen fotos"), ni reordenar/editar individualmente con facilidad desde el CMS
+2. **Tabla `media` polimórfica** (la de arriba) → más flexible y escalable, permite un componente reutilizable de "galería" en el CMS para cualquier entidad, pero es una tabla más y relaciones morphMany que hay que manejar bien
+
+Para este proyecto, con CMS "100% editable" como pidieron, yo recomiendo la **tabla `media` polimórfica** — porque el admin va a necesitar reordenar fotos, borrar una específica de la galería, marcar cuál es la portada, etc. Con JSON eso se vuelve más incómodo de manejar en el frontend del CMS.
+
+## Resumen de tablas hasta ahora
+
+```
+property_types, zones, statuses          (catálogos)
+projects, project_translations           (proyectos)
+properties, property_translations        (propiedades)
+leads                                    (mini-CRM)
+referrals                                (referidos)
+media                                    (archivos, polimórfica)
+blog_posts, blog_translations            (pendiente detallar)
+users, settings                          (pendiente detallar)
+```
+
+Cerremos el modelo con `blog_posts`, `users`/roles y `settings` — con esto queda completo el diseño de base de datos.
+
+## `blog_posts` (CV Blog)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| author_id | FK → users | quién lo escribió |
+| category | string, nullable | vimos "Nuevo Puente El Milagro", "Noticias de Moche" — categorías simples, no necesitan tabla aparte por ahora |
+| slug | string, unique | igual en todos los idiomas para mantener una sola URL con parámetro de idioma, o slug distinto por idioma si prefieren SEO más fino (a decidir) |
+| featured_image | string | |
+| is_published | boolean, default false | |
+| published_at | timestamp, nullable | permite programar publicación a futuro |
+| views_count | integer, default 0 | |
+| timestamps + softDeletes | | |
+
+## `blog_translations`
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| blog_post_id | FK → blog_posts | |
+| locale | string(2) | |
+| title | string | |
+| excerpt | string, nullable | resumen corto para el listado |
+| content | longtext | contenido completo (HTML del editor WYSIWYG) |
+| meta_title / meta_description | string/text, nullable | SEO |
+
+`unique(['blog_post_id', 'locale'])`
+
+**Nota:** dado lo que definimos antes sobre no sobrecargar de traducción operativa, el blog SÍ vale la pena traducirlo completo (a diferencia de cada propiedad individual), porque son pocos posts comparado con cientos de propiedades, y sí aportan a SEO en otros idiomas.
+
+## `users` + roles (usando Spatie Permission, no tabla propia de roles)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| name | string | |
+| email | string, unique | |
+| phone | string, nullable | para mostrarlo como "asesor" en fichas (vimos foto+WhatsApp del asesor) |
+| photo | string, nullable | foto de perfil (se muestra en fichas de propiedad como vimos con María Ángela Contreras) |
+| position | string, nullable | "Broker corporativo" — cargo que aparece bajo el nombre del asesor |
+| password | string | |
+| is_active | boolean, default true | para desactivar sin borrar el historial de leads asignados |
+| timestamps + softDeletes | | |
+
+**Roles sugeridos (vía Spatie Permission, no columna `role` fija):**
+- `admin` — acceso total al CMS
+- `editor` — administra contenido (propiedades, proyectos, blog) pero no usuarios ni configuración
+- `comercial` — solo ve y gestiona leads/referidos asignados a él, no edita contenido
+
+La ventaja de usar Spatie en vez de una columna `role` simple: permite permisos granulares después (ej. "puede editar propiedades pero no publicarlas") sin rehacer la estructura.
+
+## `settings` (configuración general editable sin tocar código)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| key | string, unique | `phone`, `whatsapp`, `email`, `address`, `facebook_url`, `instagram_url`, `tiktok_url`, `linkedin_url` |
+| value | text, nullable | |
+| type | string, default 'text' | `text`, `image`, `json` — para que el CMS sepa qué tipo de input renderizar |
+| group | string, nullable | `contact`, `social`, `seo` — para organizar la pantalla de configuración |
+| timestamps | | |
+
+Este patrón "key-value" es el estándar para configuración global: evita crear una columna nueva en una tabla rígida cada vez que el cliente pide agregar un dato de contacto o red social nueva.
+
+## Modelo completo — resumen final
+
+```
+📁 Catálogos
+   property_types, zones, statuses
+
+📁 Proyectos
+   projects, project_translations
+
+📁 Propiedades
+   properties, property_translations
+
+📁 Contenido
+   blog_posts, blog_translations
+
+📁 CRM propio
+   leads, referrals
+
+📁 Sistema
+   users (+ roles vía Spatie), media (polimórfica), settings
+```
+
+En total: **14 tablas** — es un modelo robusto pero no sobre-diseñado; cada tabla tiene una razón concreta ligada a algo que vimos en el PDF o que definimos en la conversación, sin duplicar estructura (como resolvimos con `statuses` genérica).
+
+**Siguiente paso natural:** convertir todo esto en las migraciones reales de Laravel, en el orden correcto de dependencias (catálogos → projects → properties → leads/referrals → media), más los seeders con datos de prueba basados en lo que vimos en el PDF de COVESA.
+
