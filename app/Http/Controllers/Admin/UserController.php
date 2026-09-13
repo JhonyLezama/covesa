@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\MediaStorage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -201,7 +201,7 @@ class UserController extends Controller
     }
 
     /**
-     * Redimensiona el avatar a 512px y lo guarda en el disco público.
+     * Redimensiona el avatar a 512px y lo guarda en el disco de media.
      */
     protected function storeAvatar(\Illuminate\Http\UploadedFile $file): string
     {
@@ -209,15 +209,15 @@ class UserController extends Controller
         $image = $manager->read($file->getRealPath())->scale(width: 512);
 
         $path = 'avatars/'.uniqid('avatar_', true).'.jpg';
-        Storage::disk('public')->put($path, $image->toJpeg(85));
+        MediaStorage::disk()->put($path, $image->toJpeg(85));
 
         return $path;
     }
 
     protected function deleteAvatar(?string $path): void
     {
-        if ($path && Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
+        if ($path && MediaStorage::disk()->exists($path)) {
+            MediaStorage::disk()->delete($path);
         }
     }
 }

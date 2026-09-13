@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Setting;
-use Illuminate\Support\Facades\Storage;
+use App\Support\MediaStorage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,7 +35,7 @@ class PublicProjectController extends Controller
                 'description' => $translation?->description,
                 'features' => $translation?->features ?? [],
                 'gallery' => $project->media()->orderBy('order')->get()
-                    ->map(fn ($m) => Storage::url($m->path))->all(),
+                    ->map(fn ($m) => MediaStorage::url($m->path))->all(),
             ],
             'settings' => Setting::pluck('value', 'key')->all(),
         ]);

@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Media Disk (avatares + galerías)
+    |--------------------------------------------------------------------------
+    |
+    | Disco para archivos subidos desde el CMS. En local es "public"
+    | (requiere php artisan storage:link); en producción (Laravel Cloud,
+    | filesystem efímero) debe ser "s3" vía MEDIA_DISK + credenciales AWS.
+    |
+    */
+
+    'media_disk' => env('MEDIA_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

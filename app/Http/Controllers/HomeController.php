@@ -6,8 +6,8 @@ use App\Models\Property;
 use App\Models\PropertyType;
 use App\Models\Setting;
 use App\Models\Zone;
+use App\Support\MediaStorage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -108,7 +108,7 @@ class HomeController extends Controller
             ?? $property->media->sortBy('order')->first();
 
         if ($featured) {
-            return Storage::url($featured->path);
+            return MediaStorage::url($featured->path);
         }
 
         return 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80';

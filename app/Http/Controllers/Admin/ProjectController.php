@@ -9,11 +9,11 @@ use App\Models\Project;
 use App\Models\Property;
 use App\Models\Status;
 use App\Models\Zone;
+use App\Support\MediaStorage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -163,7 +163,7 @@ class ProjectController extends Controller
                 ->map(fn (Media $m) => [
                     'id' => $m->id,
                     'type' => $m->type,
-                    'url' => Storage::url($m->path),
+                    'url' => MediaStorage::url($m->path),
                     'order' => $m->order,
                 ])->all(),
             ...$this->catalogs(),

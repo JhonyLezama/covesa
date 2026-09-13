@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BlogPostRequest;
 use App\Models\BlogPost;
 use App\Models\Media;
+use App\Support\MediaStorage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -121,7 +121,7 @@ class BlogPostController extends Controller
                 ->map(fn (Media $m) => [
                     'id' => $m->id,
                     'type' => $m->type,
-                    'url' => Storage::url($m->path),
+                    'url' => MediaStorage::url($m->path),
                     'order' => $m->order,
                 ])->all(),
             'categories' => BlogPost::whereNotNull('category')->distinct()->orderBy('category')->pluck('category')->all(),

@@ -22,9 +22,6 @@ Route::post('/contacto', [ContactController::class, 'store'])->name('contacto.st
 // Landing mínima pública del proyecto (los badges flotantes apuntan aquí).
 Route::get('/proyectos/{slug}', [PublicProjectController::class, 'show'])->name('proyectos.show');
 
-// Temporal Día 1 Semana 4: aprobación visual del sistema de diseño. Se retira antes de producción.
-Route::get('/demo-diseno', fn () => Inertia::render('DemoDiseno'))->name('demo-diseno');
-
 // Auth manual: sin registro público. Los usuarios solo los crea el admin (Día 2) o los seeders.
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');

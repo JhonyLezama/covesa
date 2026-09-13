@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin\Concerns;
 
 use App\Models\Media;
+use App\Support\MediaStorage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 
@@ -36,7 +36,7 @@ trait ManagesGallery
                 'path' => $path,
                 'original_name' => $file->getClientOriginalName(),
                 'mime_type' => 'image/jpeg',
-                'size' => Storage::disk('public')->size($path),
+                'size' => MediaStorage::disk()->size($path),
                 'order' => $order,
             ]);
         }
@@ -90,8 +90,8 @@ trait ManagesGallery
     {
         $this->ensureMediaBelongs($parent, $media);
 
-        if (Storage::disk('public')->exists($media->path)) {
-            Storage::disk('public')->delete($media->path);
+        if (MediaStorage::disk()->exists($media->path)) {
+            MediaStorage::disk()->delete($media->path);
         }
         $media->delete();
 
@@ -108,7 +108,7 @@ trait ManagesGallery
         $image->scaleDown(width: 1920);
 
         $path = "{$folder}/{$parentId}/".uniqid('photo_', true).'.jpg';
-        Storage::disk('public')->put($path, $image->toJpeg(82));
+        MediaStorage::disk()->put($path, $image->toJpeg(82));
 
         return $path;
     }
