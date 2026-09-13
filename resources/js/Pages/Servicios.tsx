@@ -72,8 +72,9 @@ function initials(name: string): string {
 function ProjectCard({ project, big = false }: { project: ServiceProject; big?: boolean }) {
   const clientName = project.client?.name ?? project.client_name ?? project.name;
   const logoUrl = project.client?.logo_url ?? null;
-  // Sin logo real siempre se muestra el nombre (el monograma solo no identifica).
-  const showName = !logoUrl || (project.client?.show_name ?? true);
+  // Nombre solo si el cliente lo permite (toggle show_name del directorio).
+  // En obra (show_name=false) va solo el logo/monograma, como la referencia.
+  const showName = project.client?.show_name ?? true;
   return (
     <Link
       href={project.href}
@@ -90,10 +91,10 @@ function ProjectCard({ project, big = false }: { project: ServiceProject; big?: 
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/60" />
 
-      <div className="relative z-10 px-6 pt-14 sm:px-8">
+      <div className="relative z-10 px-6 pt-16 sm:px-8 lg:pt-14">
         {project.status && (
           <span
-            className={`absolute top-10 right-0 rounded-none px-3 py-1 font-extrabold uppercase text-white shadow ${big ? 'text-sm' : 'text-[11px]'}`}
+            className={`absolute top-6 lg:top-10 right-0 rounded-none px-3 py-1 font-extrabold uppercase text-white shadow ${big ? 'text-sm' : 'text-[11px]'}`}
             style={{ backgroundColor: project.status.color }}
           >
             {project.status.name}
@@ -150,6 +151,8 @@ export default function Servicios() {
   // Arriba: hasta 2 activos (construcción/proceso). Abajo: resto de activos
   // en orden + concluidos. División por estado, no por posición.
   const [featured, rest] = splitByStatus(projects);
+  // Si se colapsa todo (open=-1), la imagen conserva la última visible.
+  const current = open >= 0 ? services[open] : services[0];
 
   const handleLoadMore = () => {
     setLoadingMore(true);
@@ -210,9 +213,9 @@ export default function Servicios() {
             <div className="flex flex-col items-center">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[2.5rem] border-4 border-white bg-gray-100 shadow-2xl">
                 <img
-                  key={open}
-                  alt={services[open].title}
-                  src={services[open].image}
+                  key={current.title}
+                  alt={current.title}
+                  src={current.image}
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
