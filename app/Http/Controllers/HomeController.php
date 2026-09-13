@@ -2,107 +2,115 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Property;
+use App\Models\PropertyType;
+use App\Models\Setting;
+use App\Models\Zone;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
     /**
-     * Catálogo inicial. A futuro reemplazar por modelo Property + query Eloquent.
+     * Mapeo del filtro "¿Para qué lo quiero?" (HTML) a tags de ideal_for.
      *
-     * @return array<int, array<string, mixed>>
+     * @var array<string, list<string>>
      */
-    public static function catalog(): array
-    {
-        return [
-            [
-                'image' => 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80',
-                'title' => 'Torre San Isidro — Departamentos de lujo',
-                'location' => 'San Isidro',
-                'area' => '85 - 220 m²',
-                'idealFor' => 'Familias y ejecutivos que buscan exclusividad',
-                'status' => 'venta',
-                'price' => 'Desde $185,000',
-                'href' => '#',
-            ],
-            [
-                'image' => 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80',
-                'title' => 'Centro Empresarial Javier Prado',
-                'location' => 'San Isidro',
-                'area' => '150 - 500 m²',
-                'idealFor' => 'Empresas que buscan oficinas premium',
-                'status' => 'alquiler',
-                'price' => '$25/m²',
-                'href' => '#',
-            ],
-            [
-                'image' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
-                'title' => 'Residencial La Molina — Casas independientes',
-                'location' => 'La Molina',
-                'area' => '250 - 400 m²',
-                'idealFor' => 'Familias que buscan espacio y tranquilidad',
-                'status' => 'construccion',
-                'price' => 'Desde $420,000',
-                'href' => '#',
-            ],
-            [
-                'image' => 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
-                'title' => 'Plaza Comercial Surco',
-                'location' => 'Surco',
-                'area' => '80 - 300 m²',
-                'idealFor' => 'Retail, restaurantes y servicios',
-                'status' => 'venta',
-                'price' => 'Desde $320,000',
-                'href' => '#',
-            ],
-            [
-                'image' => 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80',
-                'title' => 'Miraflores Ocean View — Penthouse',
-                'location' => 'Miraflores',
-                'area' => '180 m²',
-                'idealFor' => 'Inversionistas y compradores exclusivos',
-                'status' => 'concluido',
-                'price' => '$750,000',
-                'href' => '#',
-            ],
-            [
-                'image' => 'https://images.unsplash.com/photo-1582407947092-40a4e4e00daa?w=600&q=80',
-                'title' => 'Nave Industrial ATE — Parque Industrial',
-                'location' => 'Ate',
-                'area' => '1,000 - 5,000 m²',
-                'idealFor' => 'Logística, manufactura y almacenamiento',
-                'status' => 'alquiler',
-                'price' => '$8/m²',
-                'href' => '#',
-            ],
-        ];
-    }
+    private const PURPOSE_KEYWORDS = [
+        'almacenes' => ['almacen', 'deposito', 'logistica', 'transporte', 'taller'],
+        'locales' => ['local', 'comercial', 'tienda', 'venta'],
+        'residencial' => ['residencial', 'vivienda', 'familia', 'colegio', 'casa'],
+    ];
 
     public function index(Request $request): Response
     {
-        $tab = $request->string('tab')->toString() ?: 'todos';
-        $q = mb_strtolower($request->string('q')->toString());
-        $location = $request->string('location')->toString();
+        $validated = $request->validate([
+            'tab' => ['nullable', 'string', 'in:todos,venta,alquiler'],
+            'type' => ['nullable', 'string', 'max:255'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'purpose' => ['nullable', 'string', 'in:almacenes,locales,residencial'],
+            'priceRange' => ['nullable', 'string', 'max:32'],
+            'q' => ['nullable', 'string', 'max:255'],
+        ]);
 
-        $properties = collect(self::catalog())
-            ->when($tab === 'venta', fn ($c) => $c->where('status', 'venta'))
-            ->when($tab === 'alquiler', fn ($c) => $c->where('status', 'alquiler'))
-            ->when($location !== '', function ($c) use ($location) {
-                return $c->filter(fn ($p) => Str::slug($p['location']) === $location);
+        $tab = $validated['tab'] ?? 'todos';
+
+        $properties = Property::with(['type:id,name,slug', 'zone:id,name,slug', 'status:id,name', 'media'])
+            ->where('is_published', true)
+            ->when($tab !== 'todos', fn ($q) => $q->where('operation', $tab))
+            ->when($validated['type'] ?? null, fn ($q, $type) => $q->whereHas('type', fn ($t) => $t->where('slug', $type)))
+            ->when($validated['location'] ?? null, fn ($q, $loc) => $q->whereHas('zone', fn ($z) => $z->where('slug', $loc)))
+            ->when($validated['purpose'] ?? null, function ($q, $purpose) {
+                $q->where(function ($w) use ($purpose): void {
+                    foreach (self::PURPOSE_KEYWORDS[$purpose] as $keyword) {
+                        $w->orWhere('ideal_for', 'like', "%{$keyword}%");
+                    }
+                });
             })
-            ->when($q !== '', function ($c) use ($q) {
-                return $c->filter(fn ($p) => str_contains(
-                    mb_strtolower($p['title'].' '.$p['location']),
-                    $q
-                ));
+            ->when($validated['priceRange'] ?? null, function ($q, $range) {
+                if (str_ends_with($range, '+')) {
+                    $q->where('price', '>=', (float) rtrim($range, '+'));
+                } elseif (str_contains($range, '-')) {
+                    [$min, $max] = explode('-', $range, 2);
+                    $q->whereBetween('price', [(float) $min, (float) $max]);
+                }
             })
-            ->values()
+            ->when($validated['q'] ?? null, fn ($q, $term) => $q->where(
+                fn ($w) => $w->where('title', 'like', "%{$term}%")
+                    ->orWhereHas('zone', fn ($z) => $z->where('name', 'like', "%{$term}%"))
+            ))
+            ->orderByDesc('is_featured')
+            ->orderByDesc('updated_at')
+            ->limit(6)
+            ->get()
+            ->map(fn (Property $p) => [
+                'image' => $this->cover($p),
+                'title' => $p->title,
+                'slug' => $p->slug,
+                'type' => $p->type?->name,
+                'location' => $p->zone?->name ?? '',
+                'area' => $this->formatArea((float) $p->area_total, $p->area_unit),
+                'lots' => $p->lots_available,
+                'idealFor' => is_array($p->ideal_for) ? implode(', ', $p->ideal_for) : null,
+                'status' => $p->operation,
+                'price' => $p->price
+                    ? $p->currency.' '.number_format((float) $p->price, 2).($p->price_type === 'por_m2' ? '/m²' : '')
+                    : null,
+                'href' => "/propiedades/{$p->slug}",
+            ])
             ->all();
 
         return Inertia::render('Home', [
             'properties' => $properties,
+            'filterOptions' => [
+                'types' => PropertyType::where('is_active', true)->orderBy('order')->get(['slug', 'name']),
+                'zones' => Zone::where('is_active', true)->orderBy('name')->get(['slug', 'name']),
+            ],
+            'settings' => Setting::pluck('value', 'key')->all(),
         ]);
+    }
+
+    /**
+     * "6,692.33 m²" / "1,500 m²": decimales solo si existen, como el diseño.
+     */
+    protected function formatArea(float $total, string $unit): string
+    {
+        $decimals = fmod($total, 1.0) === 0.0 ? 0 : 2;
+
+        return number_format($total, $decimals).' '.($unit === 'm2' ? 'm²' : $unit);
+    }
+
+    protected function cover(Property $property): string
+    {
+        $featured = $property->media->firstWhere('type', 'featured')
+            ?? $property->media->sortBy('order')->first();
+
+        if ($featured) {
+            return Storage::url($featured->path);
+        }
+
+        return 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80';
     }
 }

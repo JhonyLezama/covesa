@@ -1,87 +1,76 @@
-import { MapPin, Maximize2, ArrowRight } from 'lucide-react';
-
-interface PropertyCardProps {
-  image: string;
-  title: string;
-  location: string;
-  area: string;
-  idealFor?: string;
-  status: 'venta' | 'alquiler' | 'concluido' | 'construccion';
-  price?: string;
-  href?: string;
-}
-
-const statusConfig = {
-  venta: { label: 'En venta', className: 'bg-gold text-navy-dark' },
-  alquiler: { label: 'En alquiler', className: 'bg-navy text-white' },
-  concluido: { label: 'Concluido', className: 'bg-green-600 text-white' },
-  construccion: { label: 'En construcción', className: 'bg-orange-500 text-white' },
-};
+import { Ruler, Lightbulb } from 'lucide-react';
+import type { Property } from '../types';
 
 export default function PropertyCard({
   image,
   title,
+  type,
   location,
   area,
+  lots,
   idealFor,
   status,
   price,
   href = '#',
-}: PropertyCardProps) {
-  const statusInfo = statusConfig[status];
+}: Property) {
+  const operationLabel = status === 'venta' ? 'En Venta' : status === 'alquiler' ? 'En Alquiler' : status;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow group">
-      {/* Image */}
-      <div className="relative aspect-[16/10] overflow-hidden">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        {/* Status badge */}
-        <span className={`absolute top-3 left-3 text-xs px-2.5 py-1 rounded-md font-medium ${statusInfo.className}`}>
-          {statusInfo.label}
-        </span>
-        {/* Price overlay */}
-        {price && (
-          <div className="absolute bottom-3 right-3 bg-navy-dark/85 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-md">
-            {price}
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4 sm:p-5">
-        <h3 className="text-base font-medium text-gray-text mb-2 line-clamp-1">
-          {title}
-        </h3>
-        
-        <div className="flex items-center gap-4 text-sm text-gray-muted mb-3">
-          <span className="flex items-center gap-1">
-            <MapPin size={14} className="text-navy" />
-            {location}
+    <article className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col font-display">
+      <div className="relative h-60 w-full overflow-hidden">
+        <img alt={title} src={image} className="w-full h-full object-cover" loading="lazy" />
+        <div className="absolute top-4 left-4 flex flex-col items-start gap-1.5">
+          <span className="bg-navy text-white text-[11px] font-bold px-3 py-1 rounded-md uppercase tracking-wider">
+            {type || location || 'Propiedad'}
           </span>
-          <span className="flex items-center gap-1">
-            <Maximize2 size={14} className="text-navy" />
-            {area}
+          <span className="bg-gold text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-sm uppercase tracking-wider">
+            {operationLabel}
           </span>
         </div>
-
-        {idealFor && (
-          <p className="text-sm text-gray-muted mb-4">
-            <span className="text-navy font-medium">Ideal para:</span> {idealFor}
-          </p>
-        )}
-
-        <a
-          href={href}
-          className="inline-flex items-center gap-1.5 text-sm text-navy font-medium hover:text-navy-dark transition-colors group/link"
-        >
-          Más información
-          <ArrowRight size={14} className="group-hover/link:translate-x-0.5 transition-transform" />
-        </a>
       </div>
-    </div>
+
+      <div className="bg-navy text-white p-6 flex-1 flex flex-col justify-between">
+        <div>
+          <h3 className="text-xl font-black mb-4 tracking-tight">{title}</h3>
+          <div className="space-y-3 text-xs">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-start gap-2">
+                <Ruler size={14} className="text-gold mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-gray-300 text-[10px] block">Área total:</span>
+                  <strong className="text-sm font-bold text-white">{area}</strong>
+                </div>
+              </div>
+              {lots != null && (
+                <div className="border-l border-white/20 pl-2">
+                  <span className="text-gray-300 text-[10px] block">
+                    Posibilidad de {status === 'alquiler' ? 'alquiler' : 'venta'}:
+                  </span>
+                  <strong className="text-sm font-bold text-white">{lots} Lotes</strong>
+                </div>
+              )}
+            </div>
+            {idealFor && (
+              <div className="flex items-start gap-2 pt-1 border-t border-white/20">
+                <Lightbulb size={14} className="text-gold mt-0.5 shrink-0" />
+                <div>
+                  <strong className="text-gold">Ideal para: </strong>
+                  <span className="text-gray-200">{idealFor}</span>
+                </div>
+              </div>
+            )}
+            {price && <p className="text-sm font-bold text-white">{price}</p>}
+          </div>
+          <div className="mt-6 text-center">
+            <a
+              href={href}
+              className="inline-block w-full py-2 px-4 rounded-full border border-white text-xs font-bold text-white hover:bg-white hover:text-navy transition duration-200"
+            >
+              Más información
+            </a>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }

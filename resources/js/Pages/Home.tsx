@@ -1,6 +1,6 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
-import AppLayout from '../Layouts/AppLayout';
+import PublicLayout from '../Layouts/PublicLayout';
 import Hero from '../Components/Hero';
 import Stats from '../Components/Stats';
 import PropertiesSection from '../Components/PropertiesSection';
@@ -13,6 +13,11 @@ import type { Property } from '../types';
 
 interface HomeProps {
   properties: Property[];
+  filterOptions: {
+    types: { slug: string; name: string }[];
+    zones: { slug: string; name: string }[];
+  };
+  settings?: Record<string, string | null>;
   flash?: {
     success?: string;
   };
@@ -20,7 +25,7 @@ interface HomeProps {
 }
 
 export default function Home() {
-  const { properties, flash, errors } = usePage<HomeProps>().props;
+  const { properties, filterOptions, settings, flash, errors } = usePage<HomeProps>().props;
 
   const contact = useForm({
     name: '',
@@ -34,12 +39,12 @@ export default function Home() {
   };
 
   return (
-    <AppLayout>
+    <PublicLayout settings={settings}>
       <Head title="Inicio" />
       <Hero />
       <Stats />
       <div id="proyectos">
-        <PropertiesSection properties={properties} onSearch={handleSearch} />
+        <PropertiesSection properties={properties} onSearch={handleSearch} filterOptions={filterOptions} />
       </div>
       <div id="nosotros">
         <Values />
@@ -124,6 +129,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </AppLayout>
+    </PublicLayout>
   );
 }

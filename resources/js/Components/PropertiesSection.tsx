@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { router } from '@inertiajs/react';
 import PropertyCard from './PropertyCard';
 import PropertySearch, { type SearchFilters } from './PropertySearch';
 import type { Property } from '../types';
@@ -7,9 +9,13 @@ interface PropertiesSectionProps {
   subtitle?: string;
   properties?: Property[];
   onSearch?: (filters: SearchFilters) => void;
+  filterOptions?: {
+    types: { slug: string; name: string }[];
+    zones: { slug: string; name: string }[];
+  };
 }
 
-const sampleProperties = [
+const sampleProperties: Property[] = [
   {
     image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80',
     title: 'Torre San Isidro — Departamentos de lujo',
@@ -73,32 +79,64 @@ const sampleProperties = [
 ];
 
 export default function PropertiesSection({
-  title = 'Proyectos Destacados',
-  subtitle = 'Descubre nuestras mejores opciones inmobiliarias en las ubicaciones más privilegiadas de Lima',
+  title = 'Encuentra tu propiedad ideal',
+  subtitle = 'Terrenos comerciales, industriales, locales comerciales e inmuebles residenciales.',
   properties,
   onSearch,
+  filterOptions,
 }: PropertiesSectionProps) {
   const list = properties ?? sampleProperties;
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const offStart = router.on('start', () => setSearching(true));
+    const offFinish = router.on('finish', () => setSearching(false));
+    return () => {
+      offStart();
+      offFinish();
+    };
+  }, []);
+
   return (
     <>
-      <PropertySearch onSearch={onSearch} />
-      <section className="bg-white py-10 lg:py-14">
+      <div id="propiedades" className="bg-gray-50/50 pt-14 pb-6 px-4 text-center font-display">
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-navy tracking-tight mb-2">{title}</h2>
+        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto font-medium">
+          Terrenos comerciales, industriales, locales comerciales e inmuebles residenciales.
+          <br className="hidden sm:inline" />
+          ¡Da el primer paso hacia la compra de tu próximo hogar!
+        </p>
+      </div>
+      <PropertySearch
+        onSearch={onSearch}
+        typeOptions={filterOptions?.types}
+        locationOptions={filterOptions?.zones}
+      />
+      <section className="bg-gray-50/50 py-12 font-display">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-medium text-gray-text mb-2">{title}</h2>
-            <p className="text-sm text-gray-muted max-w-lg mx-auto">{subtitle}</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {list.map((property, index) => (
-              <PropertyCard key={index} {...property} />
-            ))}
-          </div>
-          <div className="text-center mt-10">
+          {searching && (
+            <p className="mb-6 text-center text-sm text-navy" role="status">Buscando propiedades…</p>
+          )}
+          {list.length === 0 && !searching ? (
+            <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
+              <p className="text-lg font-bold text-navy">Sin resultados</p>
+              <p className="mt-1 text-sm text-gray-muted">
+                Prueba con otros filtros o limpia la búsqueda para ver todas las propiedades.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {list.map((property, index) => (
+                <PropertyCard key={property.slug ?? index} {...property} />
+              ))}
+            </div>
+          )}
+          <div className="mt-12 text-center">
             <a
               href="#proyectos"
-              className="inline-flex items-center gap-2 border border-navy text-navy px-6 py-2.5 rounded-lg text-sm hover:bg-navy hover:text-white transition-colors"
+              className="inline-block px-8 py-2.5 rounded-full border-2 border-navy text-navy font-bold text-xs uppercase tracking-wide hover:bg-navy hover:text-white transition shadow-sm"
             >
-              Ver todos los proyectos
+              Ver más
             </a>
           </div>
         </div>

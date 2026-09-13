@@ -1,121 +1,109 @@
-import { Phone, Mail, MapPin, Facebook, Instagram, Linkedin } from 'lucide-react';
+import { Phone, Mail, MapPin, Facebook, Instagram, Linkedin, Leaf, Sun, ChevronRight } from 'lucide-react';
 
-interface FooterProps {
-  companyName?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
+export interface PublicSettings {
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  whatsapp?: string | null;
 }
 
-const footerSections = [
-  {
-    title: 'Empresa',
-    links: [
-      { label: 'Nosotros', href: '#nosotros' },
-      { label: 'Nuestro equipo', href: '#equipo' },
-      { label: 'Trayectoria', href: '#trayectoria' },
-      { label: 'Trabaja con nosotros', href: '#careers' },
-    ],
-  },
-  {
-    title: 'Servicios',
-    links: [
-      { label: 'Desarrollo inmobiliario', href: '#servicios' },
-      { label: 'Construcción', href: '#servicios' },
-      { label: 'Consultoría', href: '#servicios' },
-      { label: 'Administración de propiedades', href: '#servicios' },
-    ],
-  },
-  {
-    title: 'Proyectos',
-    links: [
-      { label: 'Residencial', href: '#proyectos' },
-      { label: 'Comercial', href: '#proyectos' },
-      { label: 'Industrial', href: '#proyectos' },
-      { label: 'Terrenos', href: '#proyectos' },
-    ],
-  },
+interface FooterProps {
+  settings?: PublicSettings;
+}
+
+const sitemap = [
+  { label: 'Proyectos', href: '/#proyectos' },
+  { label: 'Nosotros', href: '/#nosotros' },
+  { label: 'Servicios', href: '/#servicios' },
+  { label: 'Covesa Informa', href: '/#blog' },
+  { label: 'Busca tu propiedad', href: '/#proyectos' },
+  { label: 'Vende tu propiedad', href: '/#contacto' },
 ];
 
-export default function Footer({
-  companyName = 'COVESA',
-  address = 'Av. Javier Prado Este 1234, San Isidro, Lima, Perú',
-  phone = '(01) 421-8900',
-  email = 'info@covesa.com.pe',
-}: FooterProps) {
+const socialBtn =
+  'w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-navy hover:text-white transition';
+
+function TikTokIcon() {
+  // lucide-react no trae TikTok: SVG inline mínimo (excepción puntual).
   return (
-    <footer className="bg-navy text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
-          {/* Brand column */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gold rounded-lg flex items-center justify-center">
-                <span className="text-navy-dark font-medium text-lg">C</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg font-medium tracking-tight leading-none">{companyName}</span>
-                <span className="text-[10px] opacity-70 tracking-widest uppercase">Inmobiliaria</span>
-              </div>
-            </div>
-            <p className="text-sm opacity-70 leading-relaxed mb-6 max-w-sm">
-              Más de 35 años construyendo confianza en el mercado inmobiliario peruano. 
-              Desarrollamos proyectos que transforman espacios y generan valor sostenible.
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+    </svg>
+  );
+}
+
+export default function Footer({ settings }: FooterProps) {
+  const phone = settings?.phone ?? '(+51) 964 233 031';
+  const email = settings?.email ?? 'informes@cvcovesa.com';
+  const address = settings?.address ?? 'Av. Larco 1525 Urb. Fátima';
+
+  return (
+    <footer className="bg-white border-t border-gray-200 pt-16 pb-12 text-gray-700 font-display">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="space-y-4">
+            <a href="/" className="flex items-center">
+              <span className="bg-navy text-white px-2 py-1 rounded-l font-bold text-lg">CO</span>
+              <span className="border-2 border-navy text-navy px-1.5 py-0.5 rounded-r font-extrabold text-lg">VESA</span>
+            </a>
+            <p className="text-xs text-gray-500 font-medium">
+              La manera perfecta de hacer NEGOCIOS INMOBILIARIOS
             </p>
-            <div className="space-y-2 text-sm opacity-70">
-              <a href="#" className="flex items-center gap-2 hover:opacity-100 transition-opacity">
-                <MapPin size={14} /> {address}
-              </a>
-              <a href={`tel:${phone}`} className="flex items-center gap-2 hover:opacity-100 transition-opacity">
-                <Phone size={14} /> {phone}
-              </a>
-              <a href={`mailto:${email}`} className="flex items-center gap-2 hover:opacity-100 transition-opacity">
-                <Mail size={14} /> {email}
-              </a>
+            <div className="flex items-center gap-3 pt-2">
+              <a className={socialBtn} href="#" aria-label="Facebook"><Facebook size={14} /></a>
+              <a className={socialBtn} href="#" aria-label="Instagram"><Instagram size={14} /></a>
+              <a className={socialBtn} href="#" aria-label="TikTok"><TikTokIcon /></a>
+              <a className={socialBtn} href="#" aria-label="LinkedIn"><Linkedin size={14} /></a>
             </div>
-            <div className="flex items-center gap-3 mt-6">
-              <a href="#" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold hover:text-navy-dark transition-colors">
-                <Facebook size={15} />
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold hover:text-navy-dark transition-colors">
-                <Instagram size={15} />
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-gold hover:text-navy-dark transition-colors">
-                <Linkedin size={15} />
-              </a>
-            </div>
+            <p className="text-[11px] text-gray-400 pt-4">© Copyright 2026 CV Covesa</p>
           </div>
 
-          {/* Link columns */}
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h4 className="text-sm font-medium mb-4 text-gold">{section.title}</h4>
-              <ul className="space-y-2.5">
-                {section.links.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-sm opacity-70 hover:opacity-100 transition-opacity"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div>
+          <nav>
+            <h4 className="text-base font-black text-navy mb-4">Mapa de sitio</h4>
+            <ul className="space-y-2 text-xs font-medium text-gray-600">
+              {sitemap.map((item) => (
+                <li key={item.label}>
+                  <a className="hover:text-navy-light flex items-center" href={item.href}>
+                    <ChevronRight size={9} className="mr-2 text-navy-light" />{item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-      {/* Bottom bar */}
-      <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs opacity-60">
-            <p>© {new Date().getFullYear()} {companyName}. Todos los derechos reservados.</p>
-            <div className="flex items-center gap-4">
-              <a href="#" className="hover:opacity-100 transition-opacity">Política de privacidad</a>
-              <a href="#" className="hover:opacity-100 transition-opacity">Términos y condiciones</a>
-            </div>
+          <div>
+            <h4 className="text-base font-black text-navy mb-4">Contacto</h4>
+            <ul className="space-y-3 text-xs text-gray-600 font-medium">
+              <li className="flex items-center gap-2.5">
+                <Phone size={14} className="text-navy shrink-0" />
+                <span>{phone}</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Mail size={14} className="text-navy shrink-0" />
+                <span>{email}</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <MapPin size={14} className="text-navy shrink-0 mt-0.5" />
+                <span>{address}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col gap-3 justify-center md:justify-start">
+            <a href="/proyectos/el-milagro" className="bg-el-milagro text-white rounded-xl p-3 flex items-center gap-3 shadow hover:shadow-md transition">
+              <Leaf size={24} className="shrink-0 opacity-80" />
+              <div>
+                <span className="block text-[8px] uppercase tracking-wider opacity-80">Mercado Mayorista Ecológico</span>
+                <strong className="text-xs font-black tracking-tight uppercase">El Milagro</strong>
+              </div>
+            </a>
+            <a href="/proyectos/hanan-del-sol" className="bg-gold-dark text-white rounded-xl p-3 flex items-center gap-3 shadow hover:shadow-md transition">
+              <Sun size={24} className="shrink-0 opacity-80" />
+              <div>
+                <strong className="text-xs font-black tracking-tight uppercase">Hanan del Sol</strong>
+                <span className="block text-[8px] uppercase tracking-wider opacity-80">Condominio Exclusivo</span>
+              </div>
+            </a>
           </div>
         </div>
       </div>

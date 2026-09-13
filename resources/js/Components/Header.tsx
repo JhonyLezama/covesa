@@ -1,101 +1,135 @@
 import { useState } from 'react';
-import { Menu, X, Phone, Mail, MapPin, ChevronDown } from 'lucide-react';
+import { Menu, X, Search, ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
   navItems?: { label: string; href: string }[];
-  ctaButtons?: { label: string; href: string; variant: 'primary' | 'secondary' | 'accent' }[];
 }
 
 const defaultNavItems = [
-  { label: 'Nosotros', href: '#nosotros' },
-  { label: 'Servicios', href: '#servicios' },
-  { label: 'Proyectos', href: '#proyectos' },
-  { label: 'CV Blog', href: '#blog' },
+  { label: 'Nosotros', href: '/#nosotros' },
+  { label: 'Servicios', href: '/#servicios' },
+  { label: 'Proyectos', href: '/#proyectos' },
+  { label: 'CV Blog', href: '/#blog' },
 ];
 
-const defaultCtaButtons = [
-  { label: 'Busca tu propiedad', href: '#buscador', variant: 'primary' as const },
-  { label: 'Vende con nosotros', href: '#contacto', variant: 'accent' as const },
-  { label: 'Refiere y gana', href: '#refiere', variant: 'secondary' as const },
+const ctaButtons = [
+  { label: 'Busca tu propiedad', href: '/#proyectos', solid: false },
+  { label: 'Vende con nosotros', href: '/#contacto', solid: false },
+  { label: 'Refiere y gana', href: '/#refiere', solid: true },
 ];
 
-export default function Header({ navItems = defaultNavItems, ctaButtons = defaultCtaButtons }: HeaderProps) {
+function Flag({ code }: { code: 'pe' | 'gb' | 'fr' }) {
+  if (code === 'pe') {
+    return (
+      <svg width="16" height="12" viewBox="0 0 16 12" className="rounded-[2px] shrink-0" aria-hidden="true">
+        <rect width="16" height="12" fill="#D91023" />
+        <rect x="5.33" width="5.34" height="12" fill="#fff" />
+      </svg>
+    );
+  }
+  if (code === 'fr') {
+    return (
+      <svg width="16" height="12" viewBox="0 0 16 12" className="rounded-[2px] shrink-0" aria-hidden="true">
+        <rect width="5.33" height="12" fill="#0055A4" />
+        <rect x="5.33" width="5.34" height="12" fill="#fff" />
+        <rect x="10.67" width="5.33" height="12" fill="#EF4135" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="16" height="12" viewBox="0 0 30 20" className="rounded-[2px] shrink-0" aria-hidden="true">
+      <rect width="30" height="20" fill="#012169" />
+      <path d="M0,0 30,20 M30,0 0,20" stroke="#fff" strokeWidth="4" />
+      <path d="M0,0 30,20 M30,0 0,20" stroke="#C8102E" strokeWidth="2" />
+      <path d="M15,0 V20 M0,10 H30" stroke="#fff" strokeWidth="6" />
+      <path d="M15,0 V20 M0,10 H30" stroke="#C8102E" strokeWidth="3.5" />
+    </svg>
+  );
+}
+
+const languages = [
+  { code: 'pe' as const, label: 'ES', name: 'Español', active: true },
+  { code: 'gb' as const, label: 'EN', name: 'English', active: false },
+  { code: 'fr' as const, label: 'FR', name: 'Français', active: false },
+];
+
+export default function Header({ navItems = defaultNavItems }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
 
   return (
-    <header className="bg-navy text-white sticky top-0 z-50">
-      {/* Top bar */}
-      <div className="bg-navy-dark hidden md:block">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-9 text-sm">
-            <div className="flex items-center gap-6">
-              <a href="tel:+5114218900" className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
-                <Phone size={13} />
-                <span>(01) 421-8900</span>
-              </a>
-              <a href="mailto:info@covesa.com.pe" className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
-                <Mail size={13} />
-                <span>info@covesa.com.pe</span>
-              </a>
-            </div>
-            <div className="flex items-center gap-1.5 opacity-80">
-              <MapPin size={13} />
-              <span>Av. Javier Prado Este 1234, San Isidro, Lima</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main nav */}
+    <header className="bg-white sticky top-0 z-50 shadow-sm font-display">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-18">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gold rounded-lg flex items-center justify-center">
-              <span className="text-navy-dark font-medium text-lg">C</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-lg font-medium tracking-tight leading-none">COVESA</span>
-              <span className="text-[10px] opacity-70 tracking-widest uppercase">Inmobiliaria</span>
-            </div>
+        {/* Grid 1fr-auto-1fr: laterales elásticos iguales = centro real + balance */}
+        <div className="flex items-center justify-between h-20 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
+          {/* Logo: izq en mobile, centro real en desktop */}
+          <a href="/" className="flex items-center lg:col-start-2 lg:justify-self-center" aria-label="COVESA inicio">
+            <span className="bg-navy text-white px-2 py-1 rounded-l-md font-bold text-xl tracking-wider">CO</span>
+            <span className="border-2 border-navy text-navy px-1.5 py-0.5 rounded-r-md font-extrabold text-xl tracking-wider">VESA</span>
           </a>
 
-          {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="text-sm opacity-85 hover:opacity-100 transition-opacity relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-gold hover:after:w-full after:transition-all"
-              >
-                {item.label}
-              </a>
+          {/* Nav izquierda: ocupa toda su columna y reparte */}
+          <nav className="hidden lg:flex items-center justify-between w-full lg:col-start-1 lg:row-start-1 lg:justify-self-stretch lg:pr-6" aria-label="Principal">
+            {navItems.map((item, i) => (
+              <span key={item.label} className="flex items-center gap-4 xl:gap-5 whitespace-nowrap">
+                {i > 0 && <span className="text-navy/20">|</span>}
+                <a
+                  href={item.href}
+                  className="text-sm font-semibold text-navy hover:text-navy-light transition-colors"
+                >
+                  {item.label}
+                </a>
+              </span>
             ))}
           </nav>
 
-          {/* Desktop CTAs */}
-          <div className="hidden lg:flex items-center gap-3">
+          {/* CTAs + idioma derecha: ocupa toda su columna y reparte con aire */}
+          <div className="hidden lg:flex items-center justify-between w-full gap-2 lg:col-start-3 lg:row-start-1 lg:justify-self-stretch lg:pl-6">
             {ctaButtons.map((btn) => (
               <a
                 key={btn.label}
                 href={btn.href}
-                className={`text-xs px-3 py-2 rounded-md transition-colors ${
-                  btn.variant === 'primary'
-                    ? 'bg-white text-navy hover:bg-gray-100'
-                    : btn.variant === 'accent'
-                    ? 'bg-gold text-navy-dark hover:bg-gold-dark'
-                    : 'border border-white/30 text-white hover:bg-white/10'
+                className={`inline-flex items-center h-8 text-[11px] xl:text-xs px-2.5 xl:px-4 rounded-full font-medium transition whitespace-nowrap ${
+                  btn.solid
+                    ? 'bg-navy text-white font-semibold shadow hover:bg-navy-light'
+                    : 'border border-navy-light text-navy-light hover:bg-navy-light hover:text-white'
                 }`}
               >
+                {btn.label === 'Busca tu propiedad' && <Search size={12} className="mr-1.5 shrink-0" />}
                 {btn.label}
               </a>
             ))}
+            <div className="relative ml-1">
+              <button
+                type="button"
+                onClick={() => setLangOpen(!langOpen)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 px-2.5 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50"
+                aria-label="Idioma: Español"
+              >
+                <Flag code="pe" />
+                <span>ES</span>
+                <ChevronDown size={12} className="text-gray-500" />
+              </button>
+              {langOpen && (
+                <div className="absolute right-0 mt-1 w-36 rounded-lg border bg-white py-1 shadow-md text-xs">
+                  {languages.map((l) => (
+                    <p
+                      key={l.code}
+                      className={`flex items-center gap-2 px-3 py-1.5 ${l.active ? 'font-semibold text-navy' : 'text-gray-400'}`}
+                    >
+                      <Flag code={l.code} />
+                      {l.label} — {l.active ? l.name : 'Próximamente'}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-md hover:bg-white/10 transition-colors"
+            className="lg:hidden p-2 rounded-md text-navy hover:bg-gray-bg transition-colors"
             aria-label="Abrir menú"
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -105,29 +139,25 @@ export default function Header({ navItems = defaultNavItems, ctaButtons = defaul
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-navy-dark border-t border-white/10">
+        <div className="lg:hidden bg-white border-t border-gray-100">
           <div className="px-4 py-4 space-y-3">
             {navItems.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
-                className="block text-sm py-2 opacity-85 hover:opacity-100"
+                className="block text-sm py-2 text-navy font-semibold"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.label}
               </a>
             ))}
-            <div className="pt-3 border-t border-white/10 space-y-2">
+            <div className="pt-3 border-t border-gray-100 space-y-2">
               {ctaButtons.map((btn) => (
                 <a
                   key={btn.label}
                   href={btn.href}
-                  className={`block text-center text-sm px-4 py-2.5 rounded-md transition-colors ${
-                    btn.variant === 'primary'
-                      ? 'bg-white text-navy'
-                      : btn.variant === 'accent'
-                      ? 'bg-gold text-navy-dark'
-                      : 'border border-white/30 text-white'
+                  className={`block text-center text-sm px-4 py-2.5 rounded-full font-medium ${
+                    btn.solid ? 'bg-navy text-white' : 'border border-navy-light text-navy-light'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -135,13 +165,12 @@ export default function Header({ navItems = defaultNavItems, ctaButtons = defaul
                 </a>
               ))}
             </div>
-            <div className="pt-3 border-t border-white/10 space-y-2 text-sm opacity-70">
-              <a href="tel:+5114218900" className="flex items-center gap-2 py-1">
-                <Phone size={14} /> (01) 421-8900
-              </a>
-              <a href="mailto:info@covesa.com.pe" className="flex items-center gap-2 py-1">
-                <Mail size={14} /> info@covesa.com.pe
-              </a>
+            <div className="pt-3 border-t border-gray-100 flex items-center gap-4 text-xs text-gray-500">
+              {languages.map((l) => (
+                <span key={l.code} className="flex items-center gap-1.5">
+                  <Flag code={l.code} /> {l.label}
+                </span>
+              ))}
             </div>
           </div>
         </div>

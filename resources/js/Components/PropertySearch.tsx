@@ -1,10 +1,13 @@
 import { useState } from 'react';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 
 interface PropertySearchProps {
   onSearch?: (filters: SearchFilters) => void;
   tabs?: { label: string; value: string }[];
   placeholder?: string;
+  typeOptions?: { slug: string; name: string }[];
+  locationOptions?: { slug: string; name: string }[];
 }
 
 export interface SearchFilters {
@@ -23,13 +26,34 @@ const defaultTabs = [
   { label: 'Alquiler', value: 'alquiler' },
 ];
 
+const purposeOptions = [
+  { value: 'almacenes', label: 'Almacenes y logística' },
+  { value: 'locales', label: 'Locales de venta' },
+  { value: 'residencial', label: 'Desarrollo residencial' },
+];
+
+const priceOptions = [
+  { value: '10000-50000', label: '$10,000 - $50,000' },
+  { value: '50000-200000', label: '$50,000 - $200,000' },
+  { value: '200000+', label: '> $200,000' },
+];
+
+const selectClass =
+  'w-full bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 py-2.5 pl-3 pr-8 appearance-none focus:outline-none focus:ring-1 focus:ring-navy-light';
+
+function SelectChevron() {
+  return <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />;
+}
+
 export default function PropertySearch({
   onSearch,
   tabs = defaultTabs,
   placeholder = 'Buscar por nombre, ubicación o tipo...',
+  typeOptions,
+  locationOptions,
 }: PropertySearchProps) {
   const [activeTab, setActiveTab] = useState('todos');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [filters, setFilters] = useState<SearchFilters>({
     tab: 'todos',
     type: '',
@@ -40,60 +64,34 @@ export default function PropertySearch({
   });
   const [searchQuery, setSearchQuery] = useState('');
 
+  const emit = (next: SearchFilters) => {
+    setFilters(next);
+    onSearch?.(next);
+  };
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    const newFilters = { ...filters, tab: value, q: searchQuery };
-    setFilters(newFilters);
-    onSearch?.(newFilters);
+    emit({ ...filters, tab: value, q: searchQuery });
   };
 
   const handleFilterChange = (key: keyof SearchFilters, value: string) => {
-    const newFilters = { ...filters, [key]: value, q: searchQuery };
-    setFilters(newFilters);
-    onSearch?.(newFilters);
+    emit({ ...filters, [key]: value, q: searchQuery });
   };
 
   const handleSearch = () => {
-    onSearch?.({ ...filters, tab: activeTab, q: searchQuery });
+    emit({ ...filters, tab: activeTab, q: searchQuery });
   };
 
   const clearFilters = () => {
-    setFilters({ tab: activeTab, type: '', location: '', purpose: '', priceRange: '', q: '' });
     setSearchQuery('');
-    onSearch?.({ tab: activeTab, type: '', location: '', purpose: '', priceRange: '', q: '' });
+    emit({ tab: activeTab, type: '', location: '', purpose: '', priceRange: '', q: '' });
   };
 
   return (
-    <section className="bg-white border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Tabs */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-1 bg-gray-bg rounded-lg p-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => handleTabChange(tab.value)}
-                className={`text-sm px-4 py-2 rounded-md transition-colors ${
-                  activeTab === tab.value
-                    ? 'bg-navy text-white'
-                    : 'text-gray-muted hover:text-gray-text'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1.5 text-sm text-navy hover:text-navy-dark transition-colors"
-          >
-            <SlidersHorizontal size={16} />
-            <span className="hidden sm:inline">Filtros</span>
-          </button>
-        </div>
-
-        {/* Search bar */}
-        <div className="flex items-center gap-2">
+    <section className="bg-gray-50/50 font-display">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Buscador libre (mejora funcional: el original no lo trae) */}
+        <div className="flex items-center gap-2 pt-2 pb-4">
           <div className="flex-1 relative">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-muted" />
             <input
@@ -101,107 +99,122 @@ export default function PropertySearch({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={placeholder}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy transition-colors"
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy transition-colors"
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-muted hover:text-gray-text"
+                aria-label="Limpiar búsqueda"
               >
                 <X size={16} />
               </button>
             )}
           </div>
           <button
-            onClick={handleSearch}
-            className="bg-navy text-white px-5 py-3 rounded-lg text-sm hover:bg-navy-dark transition-colors hidden sm:block"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1.5 text-sm text-navy hover:text-navy-light transition-colors shrink-0"
           >
-            Buscar
+            <SlidersHorizontal size={16} />
+            <span className="hidden sm:inline">Filtros</span>
           </button>
         </div>
 
-        {/* Filters panel */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div>
-                <label className="block text-xs text-gray-muted mb-1.5">Tipo de propiedad</label>
-                <select
-                  value={filters.type}
-                  onChange={(e) => handleFilterChange('type', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy bg-white"
-                >
-                  <option value="">Todos los tipos</option>
-                  <option value="departamento">Departamento</option>
-                  <option value="casa">Casa</option>
-                  <option value="oficina">Oficina</option>
-                  <option value="local-comercial">Local comercial</option>
-                  <option value="terreno">Terreno</option>
-                  <option value="nave-industrial">Nave industrial</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-muted mb-1.5">Ubicación</label>
-                <select
-                  value={filters.location}
-                  onChange={(e) => handleFilterChange('location', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy bg-white"
-                >
-                  <option value="">Todas las zonas</option>
-                  <option value="san-isidro">San Isidro</option>
-                  <option value="miraflores">Miraflores</option>
-                  <option value="surco">Surco</option>
-                  <option value="la-molina">La Molina</option>
-                  <option value="barranco">Barranco</option>
-                  <option value="san-borja">San Borja</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-muted mb-1.5">Propósito</label>
-                <select
-                  value={filters.purpose}
-                  onChange={(e) => handleFilterChange('purpose', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy bg-white"
-                >
-                  <option value="">Todos</option>
-                  <option value="vivienda">Vivienda</option>
-                  <option value="inversion">Inversión</option>
-                  <option value="comercial">Comercial</option>
-                  <option value="industrial">Industrial</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-muted mb-1.5">Rango de precio</label>
-                <select
-                  value={filters.priceRange}
-                  onChange={(e) => handleFilterChange('priceRange', e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy bg-white"
-                >
-                  <option value="">Sin límite</option>
-                  <option value="0-100000">Hasta $100,000</option>
-                  <option value="100000-200000">$100,000 - $200,000</option>
-                  <option value="200000-400000">$200,000 - $400,000</option>
-                  <option value="400000-700000">$400,000 - $700,000</option>
-                  <option value="700000+">Más de $700,000</option>
-                </select>
+          <>
+            {/* Tabs shadcn adheridos a la barra */}
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="ml-1">
+              <TabsList className="bg-transparent p-0 gap-2 flex-wrap h-auto">
+                {tabs.map((tab) => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="px-6 py-2 text-xs rounded-t-lg rounded-b-none shadow-none data-[state=active]:bg-navy data-[state=active]:text-white data-[state=active]:font-bold data-[state=inactive]:bg-gray-200 data-[state=inactive]:text-gray-700"
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+
+            {/* Barra única de filtros */}
+            <div className="bg-navy/5 border border-navy/10 p-3 rounded-2xl rounded-tl-none shadow-sm">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                <div className="w-full md:w-1/5 relative">
+                  <select
+                    value={filters.type}
+                    onChange={(e) => handleFilterChange('type', e.target.value)}
+                    className={selectClass}
+                    aria-label="Tipo de propiedad"
+                  >
+                    <option value="">Tipo</option>
+                    {(typeOptions ?? []).map((t) => (
+                      <option key={t.slug} value={t.slug}>{t.name}</option>
+                    ))}
+                  </select>
+                  <SelectChevron />
+                </div>
+                <div className="w-full md:w-1/5 relative">
+                  <select
+                    value={filters.location}
+                    onChange={(e) => handleFilterChange('location', e.target.value)}
+                    className={selectClass}
+                    aria-label="Lugar"
+                  >
+                    <option value="">Lugar</option>
+                    {(locationOptions ?? []).map((z) => (
+                      <option key={z.slug} value={z.slug}>{z.name}</option>
+                    ))}
+                  </select>
+                  <SelectChevron />
+                </div>
+                <div className="w-full md:w-1/4 relative">
+                  <select
+                    value={filters.purpose}
+                    onChange={(e) => handleFilterChange('purpose', e.target.value)}
+                    className={selectClass}
+                    aria-label="¿Para qué lo quiero?"
+                  >
+                    <option value="">¿Para qué lo quiero?</option>
+                    {purposeOptions.map((p) => (
+                      <option key={p.value} value={p.value}>{p.label}</option>
+                    ))}
+                  </select>
+                  <SelectChevron />
+                </div>
+                <div className="w-full md:w-1/6 relative">
+                  <select
+                    value={filters.priceRange}
+                    onChange={(e) => handleFilterChange('priceRange', e.target.value)}
+                    className={selectClass}
+                    aria-label="Precio"
+                  >
+                    <option value="">Precio</option>
+                    {priceOptions.map((p) => (
+                      <option key={p.value} value={p.value}>{p.label}</option>
+                    ))}
+                  </select>
+                  <SelectChevron />
+                </div>
+                <div className="w-full md:w-auto flex items-center gap-2">
+                  <button
+                    onClick={handleSearch}
+                    className="w-full md:w-auto px-6 py-2.5 bg-navy hover:bg-navy-light text-white rounded-lg font-bold text-xs shadow transition"
+                  >
+                    Buscar
+                  </button>
+                  <button
+                    onClick={clearFilters}
+                    aria-label="Limpiar filtros"
+                    className="p-2.5 bg-white border border-gray-200 hover:bg-gray-100 text-gray-600 rounded-lg text-xs shrink-0"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-between mt-4">
-              <button
-                onClick={clearFilters}
-                className="text-sm text-gray-muted hover:text-gray-text transition-colors"
-              >
-                Limpiar filtros
-              </button>
-              <button
-                onClick={handleSearch}
-                className="bg-navy text-white px-5 py-2 rounded-lg text-sm hover:bg-navy-dark transition-colors sm:hidden"
-              >
-                Aplicar filtros
-              </button>
-            </div>
-          </div>
+          </>
         )}
       </div>
     </section>
