@@ -57,4 +57,14 @@ class PublicProjectTest extends TestCase
             ->where('settings.phone', '+51 964 233 031')
         );
     }
+
+    public function test_nosotros_page_renders_with_settings(): void
+    {
+        \App\Models\Setting::create(['key' => 'phone', 'value' => '+51 964 233 031']);
+
+        $this->get('/nosotros')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('Nosotros')
+            ->where('settings.phone', '+51 964 233 031')
+        );
+    }
 }

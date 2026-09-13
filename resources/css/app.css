@@ -52,3 +52,33 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Flip cards de Valores (Nosotros): el reverso entra con línea que se
+   dibuja + párrafo por líneas escalonadas, al hover (desktop) o tap (móvil). */
+@keyframes flip-line-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes flip-divider-in {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.flip-line,
+.flip-divider {
+  opacity: 0;
+}
+.group:hover .flip-line,
+.flip-on .flip-line {
+  animation: flip-line-in 0.45s ease forwards;
+}
+.group:hover .flip-divider,
+.flip-on .flip-divider {
+  animation: flip-divider-in 0.4s ease forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flip-line,
+  .flip-divider {
+    opacity: 1;
+    animation: none;
+  }
+}

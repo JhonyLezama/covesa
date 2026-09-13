@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\PropertyMediaController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PublicProjectController;
@@ -20,6 +21,8 @@ use Inertia\Inertia;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::post('/contacto', [ContactController::class, 'store'])->name('contacto.store');
+// Página institucional (contenido hardcodeado en React, sin tabla propia).
+Route::get('/nosotros', [AboutController::class, 'index'])->name('nosotros');
 // Landing mínima pública del proyecto (los badges flotantes apuntan aquí).
 Route::get('/proyectos/{slug}', [PublicProjectController::class, 'show'])->name('proyectos.show');
 
