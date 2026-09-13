@@ -26,6 +26,8 @@ class PropertySeeder extends Seeder
                 'area_total' => 6692.33,
                 'ideal_for' => ['Almacenes', 'Depósitos', 'Talleres mecánicos'],
                 'description' => 'Terreno comercial en plena carretera a Huanchaco, ideal para almacenes y talleres.',
+                'cover' => 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&q=80',
+                'gallery' => 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=1200&q=80',
             ],
             [
                 'title' => 'Barraza',
@@ -37,6 +39,8 @@ class PropertySeeder extends Seeder
                 'area_total' => 20070,
                 'lots_available' => 4,
                 'description' => 'Terreno comercial con posibilidad de venta en 4 lotes.',
+                'cover' => 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80',
+                'gallery' => 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1200&q=80',
             ],
             [
                 'title' => 'Encalada',
@@ -47,6 +51,8 @@ class PropertySeeder extends Seeder
                 'operation' => 'venta',
                 'area_total' => 1500,
                 'description' => 'Terreno industrial en zona de Encalada.',
+                'cover' => 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=80',
+                'gallery' => 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80',
             ],
             [
                 'title' => 'Av. Túpac Amaru',
@@ -58,6 +64,8 @@ class PropertySeeder extends Seeder
                 'area_total' => 2034.81,
                 'lots_available' => 3,
                 'description' => 'Terreno comercial en alquiler sobre Av. Túpac Amaru.',
+                'cover' => 'https://images.unsplash.com/photo-1449844908441-8829872d2607?w=1200&q=80',
+                'gallery' => 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80',
             ],
             [
                 'title' => 'Frente a Tecsup',
@@ -68,6 +76,8 @@ class PropertySeeder extends Seeder
                 'operation' => 'venta',
                 'area_total' => 22530.61,
                 'description' => 'Terreno rústico frente a Tecsup, gran extensión.',
+                'cover' => 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1200&q=80',
+                'gallery' => 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80',
             ],
             [
                 'title' => 'Ex Fundo Larrea',
@@ -78,6 +88,8 @@ class PropertySeeder extends Seeder
                 'operation' => 'alquiler',
                 'area_total' => 4410,
                 'description' => 'Local industrial en alquiler en Ex Fundo Larrea.',
+                'cover' => 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=1200&q=80',
+                'gallery' => 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1200&q=80',
             ],
         ];
 
@@ -104,6 +116,27 @@ class PropertySeeder extends Seeder
                 ['locale' => 'es'],
                 ['description' => $data['description']]
             );
+
+            // Solo registro + imagen alternativa externa (hotlink). Si el admin
+            // ya subió fotos manuales, no tocar la galería. Idempotente.
+            if (! $property->media()->exists()) {
+                $property->media()->create([
+                    'type' => 'featured',
+                    'path' => $data['cover'],
+                    'original_name' => $data['slug'].'.jpg',
+                    'mime_type' => 'image/jpeg',
+                    'order' => 0,
+                    'alt_text' => $data['title'],
+                ]);
+                $property->media()->create([
+                    'type' => 'gallery',
+                    'path' => $data['gallery'],
+                    'original_name' => $data['slug'].'-2.jpg',
+                    'mime_type' => 'image/jpeg',
+                    'order' => 1,
+                    'alt_text' => $data['title'],
+                ]);
+            }
         }
     }
 }

@@ -20,6 +20,8 @@ class ProjectSeeder extends Seeder
                 'slug' => 'el-milagro',
                 'client_name' => 'Aspromermet',
                 'service_type' => 'Project Management',
+                'cover' => 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1200&q=80',
+                'gallery' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80',
                 'translation' => [
                     'locale' => 'es',
                     'title' => 'Mercado Mayorista Ecológico El Milagro',
@@ -33,6 +35,8 @@ class ProjectSeeder extends Seeder
                 'slug' => 'hanan-del-sol',
                 'client_name' => null,
                 'service_type' => null,
+                'cover' => 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80',
+                'gallery' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80',
                 'translation' => [
                     'locale' => 'es',
                     'title' => 'Hanan del Sol - Condominio Exclusivo',
@@ -59,6 +63,26 @@ class ProjectSeeder extends Seeder
                 ['locale' => 'es'],
                 $data['translation']
             );
+
+            // Solo registro + imagen alternativa externa. No pisar galería manual.
+            if (! $project->media()->exists()) {
+                $project->media()->create([
+                    'type' => 'featured',
+                    'path' => $data['cover'],
+                    'original_name' => $data['slug'].'.jpg',
+                    'mime_type' => 'image/jpeg',
+                    'order' => 0,
+                    'alt_text' => $data['name'],
+                ]);
+                $project->media()->create([
+                    'type' => 'gallery',
+                    'path' => $data['gallery'],
+                    'original_name' => $data['slug'].'-2.jpg',
+                    'mime_type' => 'image/jpeg',
+                    'order' => 1,
+                    'alt_text' => $data['name'],
+                ]);
+            }
         }
     }
 }
