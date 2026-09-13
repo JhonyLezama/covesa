@@ -11,6 +11,8 @@ mercado inmobiliario peruano.
 | Backend | Laravel 12 (PHP 8.2) |
 | Frontend | React 18 + TypeScript + Tailwind CSS v4 (Vite 7) |
 | Puente | Inertia.js v3 + Ziggy (rutas Laravel en React) |
+| Diseño público | shadcn/ui (button, badge, card, tabs, select, carousel Embla) + lucide |
+| Editor texto | Tiptap (blog) |
 | BD local | MySQL (XAMPP) · Tests en SQLite `:memory:` |
 | Roles | Spatie Permission v6 (`admin`, `editor`, `comercial`) |
 | Imágenes | Intervention Image v3 |
@@ -34,6 +36,7 @@ php artisan key:generate
 
 pnpm install
 php artisan migrate:fresh --seed
+php artisan storage:link
 ```
 
 `.env` mínimo para MySQL local:
@@ -69,47 +72,70 @@ pnpm typecheck  # tsc --noEmit
 php artisan test
 ```
 
-## Modelo de datos (Día 1-2)
+## Modelo de datos
 
 16 tablas en orden de dependencia: `property_types`, `zones`, `statuses` (genérica por
 `type`), `users` (+ Spatie), `projects`, `project_translations`, `properties`,
 `property_translations`, `blog_posts`, `blog_translations`, `referrals`, `leads`,
-`media` (polimórfica — única vía para imágenes, no hay `featured_image`/`gallery`),
-`settings`, `ui_translations`.
+`media` (polimórfica — única vía para imágenes), `settings`, `ui_translations`.
 
 > `leads.referral_id` → `referrals.id`, por eso `referrals` migra **antes** que `leads`.
-> Pendientes de negocio marcados con `// TODO` en `Property`, `PropertyTranslation`
-> y `Referral` (traducción de propiedades, `commission_percentage`).
+> Decisiones de negocio pendientes (ver `// TODO` en el código, no resolver sin el cliente):
+> traducción de propiedades (`Property`, `PropertyTranslation`) y `commission_percentage`
+> (`Referral` — el form acepta % editable, compatible con fijo o reglas futuras).
 
 ### Usuarios de prueba (password: `password`)
 
-| Email | Rol |
-|---|---|
-| `admin@covesa.com` | admin |
-| `editor@covesa.com` | editor |
-| `maria.contreras@covesa.com` | comercial (Broker corporativo) |
+| Email | Rol | Permisos |
+|---|---|---|
+| `admin@covesa.com` | admin | manage-users, manage-content, manage-settings, manage-leads, manage-own-leads |
+| `editor@covesa.com` | editor | manage-content |
+| `maria.contreras@covesa.com` | comercial | manage-own-leads |
 
-## Estructura del frontend (`resources/js/`)
+## CMS (`/admin/*`, auth manual sin Breeze)
 
-```
-Pages/        # Páginas Inertia (Home, …)
-Components/   # UI reutilizable (Header, Hero, PropertyCard, ContactForm, …)
-Layouts/      # AppLayout (Header + Footer)
-types.ts      # Tipos compartidos (Property, …)
-app.tsx       # Entry Inertia + Vite
-```
+Login en `/login` (sin registro público). Todo `/admin/*` exige `auth`; cada controlador
+autoriza por Policy (`manage-users`, `manage-content`, `manage-leads`/`manage-own-leads`).
+El comercial solo ve sus leads/propiedades asignadas y sus referidos; el editor no entra
+a leads/referidos ni a usuarios.
 
-Las rutas nombradas (`home`, `contacto.store`) se usan en React vía `route()` (Ziggy).
+| Área | Ruta | Notas |
+|---|---|---|
+| Dashboard | `/admin` | |
+| Usuarios | `/admin/usuarios` | Solo admin. Foto 512px, toggle activo (no borrado físico), anti auto-baja |
+| Propiedades | `/admin/propiedades` | Slug auto, tags `ideal_for`, galería (portada, orden, borrado en duro — ver `Media`) |
+| Proyectos | `/admin/proyectos` | Traducción ES en transacción, detalle con asociadas |
+| Blog | `/admin/blog` | Categoría string + datalist, Tiptap, galería |
+| Leads | `/admin/leads` | Sin creación manual (nacen en Semana 6). Reasigna solo admin; estado admin o dueño |
+| Referidos | `/admin/referidos` | Comisión auto (`monto × % / 100`, solo admin), leads generados |
+
+## Sitio público
+
+`PublicLayout` (header blanco logo centrado, footer 4 columnas desde `settings`, badges
+El Milagro/Hanan + WhatsApp flotantes) con Montserrat — el admin sigue en Inter.
+Rutas: `/` (buscador: tab, tipo, lugar, propósito→`ideal_for`, precio; 6 destacadas),
+`/proyectos/{slug}` (landing mínima; la completa es Semana 5).
+Diseño portado de `.int/web/code.html` (local, no versionado) según PDF.
+`/demo-diseno` es temporal para aprobación visual — retirar antes de producción.
+
+## Paleta
+
+Oficial: navy `#0C447C`, gold `#F2A623`, grises. `brand` es alias de navy-light `#1A5A9E`.
+Excepciones aprobadas: verde El Milagro `#2F8F4E`, WhatsApp `#25D366`.
+Regla: tonos del PDF se estiman al aprobado más cercano; color nuevo solo con aprobación.
+
+## Estado
+
+- [x] Semana 2: CMS núcleo (auth, usuarios, propiedades, galería, home real)
+- [x] Semana 3: proyectos, blog, leads, referidos (73 tests)
+- [x] Semana 4 (días 1–5): diseño público shadcn + portado HTML (77 tests, 577 assertions)
+- [ ] Semana 5: landings de proyecto + ficha pública de propiedad completas
+- [ ] Semana 6: formularios públicos → leads (contacto hoy solo va al log)
+- [ ] Semana 7: multiidioma (selector de idioma hoy visual)
 
 ## Convenciones
 
 - Gestor JS: **pnpm** (`packageManager` fijado en `package.json`).
-- `composer.json`/`composer.lock` alineados a **PHP 8.2** (el VPS/staging también debe
-  usar 8.2; Spatie v6 e Intervention v3 son las versiones compatibles).
+- `composer.json`/`composer.lock` alineados a **PHP 8.2**.
 - `QUEUE_CONNECTION=database` en local (Redis recién en el VPS).
-
-## Estado / siguiente paso
-
-- [x] Setup + modelo físico + seeders + tests (8/8 en verde)
-- [ ] Validación de catálogos con el cliente (freno acordado)
-- [ ] Semana 2: CMS núcleo (login manual Inertia + CRUD)
+- Referencia `.int/` (PDF, HTML, imágenes) es **local y no se versiona**.
