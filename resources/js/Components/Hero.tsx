@@ -43,7 +43,9 @@ const defaultSlides: HeroSlide[] = [
 ];
 
 export default function Hero({ slides = defaultSlides, autoPlayInterval = 6000 }: HeroProps) {
-  const [emblaRef, api] = useEmblaCarousel({ loop: true });
+  // align:start + altura fija evitan que en móvil la transición se vea "a medias":
+  // con min-h el viewport recalculaba su medida a mitad del scroll.
+  const [emblaRef, api] = useEmblaCarousel({ loop: true, align: 'start', duration: 20 });
   const [selected, setSelected] = useState(0);
 
   const onSelect = useCallback(() => {
@@ -57,27 +59,29 @@ export default function Hero({ slides = defaultSlides, autoPlayInterval = 6000 }
     api.on('reInit', onSelect);
     return () => {
       api.off('select', onSelect);
+      api.off('reInit', onSelect);
     };
   }, [api, onSelect]);
 
   useEffect(() => {
     if (!api) return;
+    // Se reinicia en cada cambio de slide: el autoplay no pisa un arrastre manual.
     const timer = setInterval(() => api.scrollNext(), autoPlayInterval);
     return () => clearInterval(timer);
-  }, [api, autoPlayInterval]);
+  }, [api, autoPlayInterval, selected]);
 
   return (
-    <section className="relative min-h-[580px] lg:h-[620px] overflow-hidden font-display" aria-roledescription="carousel">
+    <section className="relative h-[580px] sm:h-[600px] lg:h-[620px] overflow-hidden font-display" aria-roledescription="carousel">
       <div ref={emblaRef} className="h-full overflow-hidden">
         <div className="flex h-full">
           {slides.map((slide, index) => (
-            <div key={index} className="min-w-0 shrink-0 grow-0 basis-full relative" role="group" aria-roledescription="slide">
+            <div key={index} className="min-w-0 shrink-0 grow-0 basis-full relative h-full" role="group" aria-roledescription="slide">
               <div
                 className="absolute inset-0 bg-cover bg-center"
                 style={{ backgroundImage: `url(${slide.image})` }}
               />
               <div className="absolute inset-0 bg-navy/60" />
-              <div className="relative z-10 min-h-[580px] lg:h-[620px] max-w-5xl mx-auto px-4 flex flex-col items-center justify-center text-center">
+              <div className="relative z-10 h-full max-w-5xl mx-auto px-4 pb-20 flex flex-col items-center justify-center text-center">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-white leading-tight mb-8 drop-shadow-md">
                   {slide.title}
                 </h1>
@@ -96,33 +100,50 @@ export default function Hero({ slides = defaultSlides, autoPlayInterval = 6000 }
         </div>
       </div>
 
+      {/* Flechas laterales solo en desktop: en móvil pisaban el texto. */}
       <button
         onClick={() => api?.scrollPrev()}
         aria-label="Anterior"
-        className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition"
+        className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 hidden md:flex w-11 h-11 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full items-center justify-center text-white transition"
       >
         <ChevronLeft size={20} />
       </button>
       <button
         onClick={() => api?.scrollNext()}
         aria-label="Siguiente"
-        className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition"
+        className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 hidden md:flex w-11 h-11 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full items-center justify-center text-white transition"
       >
         <ChevronRight size={20} />
       </button>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+      {/* Controles inferiores: en móvil las flechas van aquí, pequeñas y
+          debajo del CTA, flanqueando los dots para no tapar el texto. */}
+      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
+        <button
+          onClick={() => api?.scrollPrev()}
+          aria-label="Anterior"
+          className="md:hidden w-8 h-8 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition"
+        >
+          <ChevronLeft size={16} />
+        </button>
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => api?.scrollTo(index)}
             aria-label={`Ir a slide ${index + 1}`}
             className={cn(
-              'h-3 w-3 rounded-full transition-colors',
+              'h-2.5 w-2.5 rounded-full transition-colors',
               index === selected ? 'bg-white' : 'bg-white/60 hover:bg-white/80',
             )}
           />
         ))}
+        <button
+          onClick={() => api?.scrollNext()}
+          aria-label="Siguiente"
+          className="md:hidden w-8 h-8 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition"
+        >
+          <ChevronRight size={16} />
+        </button>
       </div>
     </section>
   );

@@ -33,11 +33,13 @@ class HomeController extends Controller
             'purpose' => ['nullable', 'string', 'in:almacenes,locales,residencial'],
             'priceRange' => ['nullable', 'string', 'max:32'],
             'q' => ['nullable', 'string', 'max:255'],
+            'limit' => ['nullable', 'integer', 'min:6', 'max:48'],
         ]);
 
         $tab = $validated['tab'] ?? 'todos';
+        $limit = $validated['limit'] ?? 6;
 
-        $properties = Property::with(['type:id,name,slug', 'zone:id,name,slug', 'status:id,name', 'media'])
+        $base = Property::with(['type:id,name,slug', 'zone:id,name,slug', 'status:id,name', 'media'])
             ->where('is_published', true)
             ->when($tab !== 'todos', fn ($q) => $q->where('operation', $tab))
             ->when($validated['type'] ?? null, fn ($q, $type) => $q->whereHas('type', fn ($t) => $t->where('slug', $type)))
@@ -60,10 +62,15 @@ class HomeController extends Controller
             ->when($validated['q'] ?? null, fn ($q, $term) => $q->where(
                 fn ($w) => $w->where('title', 'like', "%{$term}%")
                     ->orWhereHas('zone', fn ($z) => $z->where('name', 'like', "%{$term}%"))
-            ))
+            ));
+
+        // Total sin límite para saber si el botón "Ver más" debe aparecer.
+        $total = (clone $base)->count();
+
+        $properties = $base
             ->orderByDesc('is_featured')
             ->orderByDesc('updated_at')
-            ->limit(6)
+            ->limit($limit)
             ->get()
             ->map(fn (Property $p) => [
                 'image' => $this->cover($p),
@@ -84,6 +91,9 @@ class HomeController extends Controller
 
         return Inertia::render('Home', [
             'properties' => $properties,
+            'total' => $total,
+            'hasMore' => $total > count($properties),
+            'limit' => $limit,
             'filterOptions' => [
                 'types' => PropertyType::where('is_active', true)->orderBy('order')->get(['slug', 'name']),
                 'zones' => Zone::where('is_active', true)->orderBy('name')->get(['slug', 'name']),

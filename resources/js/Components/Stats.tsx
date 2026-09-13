@@ -26,9 +26,9 @@ export default function Stats({ stats = defaultStats }: StatsProps) {
   return (
     <section className="bg-gray-bg border-b border-gray-200 py-10 font-display">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center justify-center divide-y md:divide-y-0 md:divide-x divide-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center justify-center divide-y md:divide-y-0 md:divide-x divide-gray-200 max-w-sm mx-auto md:max-w-none">
           {stats.map((stat, index) => (
-            <div key={index} className="flex items-center justify-center gap-4 pt-4 md:pt-0 md:pl-6 first:md:pl-0">
+            <div key={index} className="flex items-center justify-start md:justify-center gap-4 pt-4 md:pt-0 md:pl-6 first:md:pl-0">
               <div className="w-16 h-16 shrink-0 flex items-center justify-center text-navy">
                 {stat.icon}
               </div>

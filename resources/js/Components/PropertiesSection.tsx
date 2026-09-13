@@ -9,6 +9,9 @@ interface PropertiesSectionProps {
   subtitle?: string;
   properties?: Property[];
   onSearch?: (filters: SearchFilters) => void;
+  hasMore?: boolean;
+  remaining?: number;
+  onLoadMore?: () => void;
   filterOptions?: {
     types: { slug: string; name: string }[];
     zones: { slug: string; name: string }[];
@@ -83,6 +86,9 @@ export default function PropertiesSection({
   subtitle = 'Terrenos comerciales, industriales, locales comerciales e inmuebles residenciales.',
   properties,
   onSearch,
+  hasMore = false,
+  remaining = 0,
+  onLoadMore,
   filterOptions,
 }: PropertiesSectionProps) {
   const list = properties ?? sampleProperties;
@@ -131,14 +137,19 @@ export default function PropertiesSection({
               ))}
             </div>
           )}
-          <div className="mt-12 text-center">
-            <a
-              href="#proyectos"
-              className="inline-block px-8 py-2.5 rounded-full border-2 border-navy text-navy font-bold text-xs uppercase tracking-wide hover:bg-navy hover:text-white transition shadow-sm"
-            >
-              Ver más
-            </a>
-          </div>
+          {/* Solo aparece si hay más por cargar: con 0 resultados o todo
+              visible no se muestra. */}
+          {hasMore && onLoadMore && list.length > 0 && (
+            <div className="mt-12 text-center">
+              <button
+                onClick={onLoadMore}
+                disabled={searching}
+                className="inline-block px-8 py-2.5 rounded-full border-2 border-navy text-navy font-bold text-xs uppercase tracking-wide hover:bg-navy hover:text-white transition shadow-sm disabled:opacity-60"
+              >
+                {searching ? 'Cargando…' : remaining > 0 ? `Ver más (${remaining})` : 'Ver más'}
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </>

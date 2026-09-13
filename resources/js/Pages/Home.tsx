@@ -13,6 +13,9 @@ import type { Property } from '../types';
 
 interface HomeProps {
   properties: Property[];
+  total: number;
+  hasMore: boolean;
+  limit: number;
   filterOptions: {
     types: { slug: string; name: string }[];
     zones: { slug: string; name: string }[];
@@ -25,7 +28,8 @@ interface HomeProps {
 }
 
 export default function Home() {
-  const { properties, filterOptions, settings, flash, errors } = usePage<HomeProps>().props;
+  const { properties, total, hasMore, limit, filterOptions, settings, flash, errors } = usePage<HomeProps>().props;
+  const { url } = usePage();
 
   const contact = useForm({
     name: '',
@@ -38,13 +42,26 @@ export default function Home() {
     router.get(route('home'), filters, { preserveState: true, preserveScroll: true, replace: true });
   };
 
+  const handleLoadMore = () => {
+    // Conserva los filtros actuales de la URL y amplía el límite.
+    const params = Object.fromEntries(new URLSearchParams(url.split('?')[1] ?? ''));
+    router.get(route('home'), { ...params, limit: limit + 6 }, { preserveState: true, preserveScroll: true });
+  };
+
   return (
     <PublicLayout settings={settings}>
       <Head title="Inicio" />
       <Hero />
       <Stats />
       <div id="proyectos">
-        <PropertiesSection properties={properties} onSearch={handleSearch} filterOptions={filterOptions} />
+        <PropertiesSection
+          properties={properties}
+          onSearch={handleSearch}
+          filterOptions={filterOptions}
+          hasMore={hasMore}
+          remaining={total - properties.length}
+          onLoadMore={handleLoadMore}
+        />
       </div>
       <div id="nosotros">
         <Values />
