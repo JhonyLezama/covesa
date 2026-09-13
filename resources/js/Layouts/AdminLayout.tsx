@@ -69,6 +69,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 Proyectos
               </Link>
             </li>
+            {can('manage-content') && (
+              <li>
+                <Link
+                  href={route('admin.clientes.index')}
+                  className="block rounded-lg px-3 py-2 hover:bg-white text-gray-text"
+                >
+                  Clientes
+                </Link>
+              </li>
+            )}
             <li>
               <Link
                 href={route('admin.blog.index')}

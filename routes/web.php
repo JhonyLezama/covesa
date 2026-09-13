@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BlogMediaController;
 use App\Http\Controllers\Admin\BlogPostController;
+use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\ReferralController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PublicProjectController;
+use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,6 +25,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::post('/contacto', [ContactController::class, 'store'])->name('contacto.store');
 // Página institucional (contenido hardcodeado en React, sin tabla propia).
 Route::get('/nosotros', [AboutController::class, 'index'])->name('nosotros');
+// Servicios: acordeón institucional + grid de proyectos reales.
+Route::get('/servicios', [ServiceController::class, 'index'])->name('servicios');
 // Landing mínima pública del proyecto (los badges flotantes apuntan aquí).
 Route::get('/proyectos/{slug}', [PublicProjectController::class, 'show'])->name('proyectos.show');
 
@@ -54,6 +58,8 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function (): v
     Route::delete('/propiedades/{property}/media/{media}', [PropertyMediaController::class, 'destroy'])->name('propiedades.media.destroy');
     // Proyectos (Semana 3 Día 1, sin imágenes): ProjectPolicy espeja a PropertyPolicy.
     Route::resource('proyectos', ProjectController::class)->parameters(['proyectos' => 'proyecto'])->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+    // Clientes: directorio con logo + contactos; los proyectos referencian vía client_id.
+    Route::resource('clientes', ClientController::class)->parameters(['clientes' => 'cliente'])->except(['show']);
     Route::get('/proyectos/{proyecto}', [ProjectController::class, 'show'])->name('proyectos.show');
     // Galería polimórfica del proyecto (Semana 3 Día 2): mismo trait que propiedades.
     Route::post('/proyectos/{proyecto}/media', [ProjectMediaController::class, 'store'])->name('proyectos.media.store');

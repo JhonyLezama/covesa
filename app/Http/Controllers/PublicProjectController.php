@@ -16,7 +16,7 @@ class PublicProjectController extends Controller
      */
     public function show(string $slug): Response
     {
-        $project = Project::with(['zone:id,name', 'status:id,name,color', 'media'])
+        $project = Project::with(['zone:id,name', 'status:id,name,color', 'client:id,name,logo_path,show_name', 'media'])
             ->where('slug', $slug)
             ->where('is_published', true)
             ->firstOrFail();
@@ -26,7 +26,11 @@ class PublicProjectController extends Controller
         return Inertia::render('Projects/Show', [
             'project' => [
                 'name' => $project->name,
-                'client_name' => $project->client_name,
+                'client_name' => $project->clientName(),
+                'client' => [
+                    'name' => $project->clientName(),
+                    'logo_url' => $project->client?->logoUrl(),
+                ],
                 'service_type' => $project->service_type,
                 'zone' => $project->zone?->name,
                 'status' => $project->status ? ['name' => $project->status->name, 'color' => $project->status->color] : null,

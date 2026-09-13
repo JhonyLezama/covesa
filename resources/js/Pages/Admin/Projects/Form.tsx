@@ -16,6 +16,7 @@ interface EditProject {
   slug: string;
   status_id: number;
   zone_id: number;
+  client_id: number | null;
   client_name: string | null;
   service_type: string | null;
   video_url: string | null;
@@ -34,6 +35,7 @@ interface FormProps {
   media?: MediaItem[];
   zones: Option[];
   statuses: Option[];
+  clients: Option[];
   errors?: Record<string, string>;
   [key: string]: unknown;
 }
@@ -43,7 +45,7 @@ const labelClass = 'block text-sm font-medium text-gray-text mb-1';
 const errorClass = 'mt-1 text-sm text-red-600';
 
 export default function Form() {
-  const { project, media, zones, statuses, errors } = usePage<FormProps>().props;
+  const { project, media, zones, statuses, clients, errors } = usePage<FormProps>().props;
   const isEdit = project !== null;
 
   const { data, setData, post, put, processing } = useForm({
@@ -51,6 +53,7 @@ export default function Form() {
     slug: project?.slug ?? '',
     status_id: project?.status_id.toString() ?? '',
     zone_id: project?.zone_id.toString() ?? '',
+    client_id: project?.client_id?.toString() ?? '',
     client_name: project?.client_name ?? '',
     service_type: project?.service_type ?? '',
     video_url: project?.video_url ?? '',
@@ -120,15 +123,23 @@ export default function Form() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="client_name" className={labelClass}>Cliente</label>
+              <label htmlFor="client_id" className={labelClass}>Cliente (directorio)</label>
+              <select id="client_id" value={data.client_id} onChange={(e) => setData('client_id', e.target.value)} className={inputClass}>
+                <option value="">Sin cliente</option>
+                {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              {errors?.client_id && <p className={errorClass}>{errors.client_id}</p>}
+            </div>
+            <div>
+              <label htmlFor="client_name" className={labelClass}>Cliente (texto libre, legado)</label>
               <input id="client_name" value={data.client_name} onChange={(e) => setData('client_name', e.target.value)} className={inputClass} />
               {errors?.client_name && <p className={errorClass}>{errors.client_name}</p>}
             </div>
-            <div>
-              <label htmlFor="service_type" className={labelClass}>Tipo de servicio</label>
-              <input id="service_type" placeholder="Project Management" value={data.service_type} onChange={(e) => setData('service_type', e.target.value)} className={inputClass} />
-              {errors?.service_type && <p className={errorClass}>{errors.service_type}</p>}
-            </div>
+          </div>
+          <div>
+            <label htmlFor="service_type" className={labelClass}>Tipo de servicio</label>
+            <input id="service_type" placeholder="Project Management" value={data.service_type} onChange={(e) => setData('service_type', e.target.value)} className={inputClass} />
+            {errors?.service_type && <p className={errorClass}>{errors.service_type}</p>}
           </div>
 
           <div>
@@ -179,6 +190,7 @@ export default function Form() {
           <div>
             <label htmlFor="description" className={labelClass}>Descripción *</label>
             <textarea id="description" rows={5} value={data.description} onChange={(e) => setData('description', e.target.value)} className={inputClass} />
+            <p className="mt-1 text-xs text-gray-muted">Usa **palabra** para resaltar en mayúsculas y negrita en las cards.</p>
             {errors?.description && <p className={errorClass}>{errors.description}</p>}
           </div>
 

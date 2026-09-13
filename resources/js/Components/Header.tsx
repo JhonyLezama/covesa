@@ -7,7 +7,7 @@ interface HeaderProps {
 
 const defaultNavItems = [
   { label: 'Nosotros', href: '/nosotros' },
-  { label: 'Servicios', href: '/#servicios' },
+  { label: 'Servicios', href: '/servicios' },
   { label: 'Proyectos', href: '/#proyectos' },
   { label: 'CV Blog', href: '/#blog' },
 ];

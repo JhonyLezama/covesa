@@ -1,10 +1,9 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import PublicLayout from '../Layouts/PublicLayout';
 import Hero from '../Components/Hero';
 import Stats from '../Components/Stats';
 import PropertiesSection from '../Components/PropertiesSection';
-import Values from '../Components/Values';
 import ClientLogos from '../Components/ClientLogos';
 import CTASection from '../Components/CTASection';
 import ContactForm from '../Components/ContactForm';
@@ -66,8 +65,19 @@ export default function Home() {
           onLoadMore={handleLoadMore}
         />
       </div>
-      <div id="nosotros">
-        <Values />
+      <div id="nosotros" className="bg-white py-10 text-center font-display">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <h2 className="text-2xl sm:text-3xl font-black text-navy tracking-tight mb-2">Nuestros valores</h2>
+          <p className="text-sm text-gray-muted mb-5">
+            Compromiso, proactividad, flexibilidad y excelencia nos definen.
+          </p>
+          <Link
+            href="/nosotros"
+            className="inline-block px-8 py-2.5 rounded-full border-2 border-navy text-navy font-bold text-xs uppercase tracking-wide hover:bg-navy hover:text-white transition shadow-sm"
+          >
+            Conócenos
+          </Link>
+        </div>
       </div>
       <ClientLogos />
       <CTASection />

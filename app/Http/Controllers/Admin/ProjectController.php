@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ProjectRequest;
+use App\Models\Client;
 use App\Models\Media;
 use App\Models\Project;
 use App\Models\Property;
@@ -32,7 +33,7 @@ class ProjectController extends Controller
             'published' => ['nullable', 'string', 'in:publicadas,borrador'],
         ]);
 
-        $projects = Project::with(['zone:id,name', 'status:id,name,color'])
+        $projects = Project::with(['zone:id,name', 'status:id,name,color', 'client:id,name'])
             ->when($validated['q'] ?? null, fn ($q, $term) => $q->where('name', 'like', "%{$term}%"))
             ->when($validated['status_id'] ?? null, fn ($q, $sid) => $q->where('status_id', $sid))
             ->when($validated['published'] ?? null, fn ($q, $pub) => $q->where('is_published', $pub === 'publicadas'))
@@ -44,7 +45,7 @@ class ProjectController extends Controller
                 'id' => $p->id,
                 'name' => $p->name,
                 'slug' => $p->slug,
-                'client_name' => $p->client_name,
+                'client_name' => $p->clientName(),
                 'is_published' => $p->is_published,
                 'order' => $p->order,
                 'zone' => $p->zone?->name,
@@ -103,14 +104,14 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $proyecto);
 
-        $proyecto->load(['zone:id,name', 'status:id,name,color']);
+        $proyecto->load(['zone:id,name', 'status:id,name,color', 'client:id,name']);
 
         return Inertia::render('Admin/Projects/Show', [
             'project' => [
                 'id' => $proyecto->id,
                 'name' => $proyecto->name,
                 'slug' => $proyecto->slug,
-                'client_name' => $proyecto->client_name,
+                'client_name' => $proyecto->clientName(),
                 'service_type' => $proyecto->service_type,
                 'is_published' => $proyecto->is_published,
                 'zone' => $proyecto->zone?->name,
@@ -145,6 +146,7 @@ class ProjectController extends Controller
                 'slug' => $proyecto->slug,
                 'status_id' => $proyecto->status_id,
                 'zone_id' => $proyecto->zone_id,
+                'client_id' => $proyecto->client_id,
                 'client_name' => $proyecto->client_name,
                 'service_type' => $proyecto->service_type,
                 'video_url' => $proyecto->video_url,
@@ -214,6 +216,7 @@ class ProjectController extends Controller
         return [
             'zones' => Zone::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'statuses' => Status::where('type', 'project')->where('is_active', true)->orderBy('order')->get(['id', 'name']),
+            'clients' => Client::where('is_active', true)->orderBy('order')->orderBy('name')->get(['id', 'name']),
         ];
     }
 

@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { HeartHandshake, Clock, BadgeCheck, Timer, Award, Target, Flag } from 'lucide-react';
 import { useState } from 'react';
 import PublicLayout from '../Layouts/PublicLayout';
+import Breadcrumb from '../Components/Breadcrumb';
 
 interface NosotrosProps {
   settings?: Record<string, string | null>;
@@ -113,6 +114,10 @@ export default function Nosotros() {
   return (
     <PublicLayout settings={settings}>
       <Head title="Nosotros" />
+
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-6">
+        <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Nosotros' }]} />
+      </div>
 
       {/* ¿Quiénes somos? */}
       <section className="relative overflow-hidden pt-12 pb-20">

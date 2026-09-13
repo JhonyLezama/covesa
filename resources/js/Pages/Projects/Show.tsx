@@ -1,5 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import PublicLayout from '../../Layouts/PublicLayout';
+import Breadcrumb from '../../Components/Breadcrumb';
+import { renderHighlights } from '../../lib/highlights';
 
 interface PublicProjectProps {
   project: {
@@ -24,6 +26,14 @@ export default function Show() {
   return (
     <PublicLayout settings={settings}>
       <Head title={project.title} />
+
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <Breadcrumb
+            items={[{ label: 'Inicio', href: '/' }, { label: 'Servicios', href: '/servicios' }, { label: project.title }]}
+          />
+        </div>
+      </div>
 
       {/* Hero simple */}
       <section className="bg-navy text-white">
@@ -54,7 +64,7 @@ export default function Show() {
         )}
 
         {project.description && (
-          <p className="max-w-3xl text-gray-text leading-relaxed whitespace-pre-line">{project.description}</p>
+          <p className="max-w-3xl text-gray-text leading-relaxed whitespace-pre-line">{renderHighlights(project.description, 'font-bold uppercase text-navy')}</p>
         )}
 
         {project.features.length > 0 && (
@@ -70,10 +80,6 @@ export default function Show() {
         {project.service_type && (
           <p className="mt-6 text-sm text-gray-muted">Servicio: {project.service_type}</p>
         )}
-
-        <Link href="/" className="mt-8 inline-block text-sm text-navy hover:underline">
-          ← Volver al inicio
-        </Link>
       </section>
     </PublicLayout>
   );

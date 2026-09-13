@@ -13,7 +13,7 @@ class Project extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'slug', 'status_id', 'zone_id', 'client_name',
+        'name', 'slug', 'status_id', 'zone_id', 'client_id', 'client_name',
         'service_type', 'video_url', 'latitude', 'longitude',
         'is_published', 'order',
     ];
@@ -31,6 +31,20 @@ class Project extends Model
     public function zone(): BelongsTo
     {
         return $this->belongsTo(Zone::class);
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Nombre del cliente: relación nueva, con fallback a la columna
+     * de texto legacy (migración progresiva de datos).
+     */
+    public function clientName(): string
+    {
+        return $this->client?->name ?? (string) $this->client_name;
     }
 
     public function translations(): HasMany

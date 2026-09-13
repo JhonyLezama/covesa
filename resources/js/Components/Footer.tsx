@@ -14,7 +14,7 @@ interface FooterProps {
 const sitemap = [
   { label: 'Proyectos', href: '/#proyectos' },
   { label: 'Nosotros', href: '/nosotros' },
-  { label: 'Servicios', href: '/#servicios' },
+  { label: 'Servicios', href: '/servicios' },
   { label: 'Covesa Informa', href: '/#blog' },
   { label: 'Busca tu propiedad', href: '/#proyectos' },
   { label: 'Vende tu propiedad', href: '/#contacto' },
