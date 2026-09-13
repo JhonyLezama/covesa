@@ -51,7 +51,10 @@ export default function Home() {
   return (
     <PublicLayout settings={settings}>
       <Head title="Inicio" />
-      <Hero />
+      <Hero
+        overlayTone={settings?.hero_overlay ?? 'black'}
+        overlayIntensity={settings?.hero_overlay_intensity ?? 'medio'}
+      />
       <Stats />
       <div id="proyectos">
         <PropertiesSection

@@ -18,6 +18,8 @@ class SettingSeeder extends Seeder
             ['key' => 'instagram_url', 'value' => null, 'type' => 'text', 'group' => 'social'],
             ['key' => 'tiktok_url', 'value' => null, 'type' => 'text', 'group' => 'social'],
             ['key' => 'linkedin_url', 'value' => null, 'type' => 'text', 'group' => 'social'],
+            ['key' => 'hero_overlay', 'value' => 'black', 'type' => 'select', 'group' => 'appearance'],
+            ['key' => 'hero_overlay_intensity', 'value' => 'medio', 'type' => 'select', 'group' => 'appearance'],
         ];
 
         foreach ($settings as $setting) {

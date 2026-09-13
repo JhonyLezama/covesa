@@ -97,6 +97,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </Link>
               </li>
             )}
+            {can('manage-settings') && (
+              <li>
+                <Link
+                  href={route('admin.ajustes.index')}
+                  className="block rounded-lg px-3 py-2 hover:bg-white text-gray-text"
+                >
+                  Ajustes
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
 

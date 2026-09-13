@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\ProjectMediaController;
 use App\Http\Controllers\Admin\PropertyController;
 use App\Http\Controllers\Admin\PropertyMediaController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ContactController;
@@ -35,6 +36,9 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
 // Panel interno: todo /admin/* exige autenticación. El grano fino por permiso se aplica por ruta (Día 2).
 Route::middleware('auth')->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
+    // Ajustes de apariencia (switch overlay del hero). Solo manage-settings, por código.
+    Route::get('/ajustes', [SettingController::class, 'index'])->name('ajustes.index');
+    Route::patch('/ajustes', [SettingController::class, 'update'])->name('ajustes.update');
     // Gestión de usuarios: la UserPolicy (permiso manage-users) bloquea por código.
     Route::patch('/usuarios/{user}/toggle', [UserController::class, 'toggleActive'])->name('usuarios.toggle');
     Route::resource('usuarios', UserController::class)->parameters(['usuarios' => 'user'])->except(['show']);

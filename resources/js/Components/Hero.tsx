@@ -13,6 +13,8 @@ interface HeroSlide {
 interface HeroProps {
   slides?: HeroSlide[];
   autoPlayInterval?: number;
+  overlayTone?: string;
+  overlayIntensity?: string;
 }
 
 const defaultSlides: HeroSlide[] = [
@@ -42,11 +44,35 @@ const defaultSlides: HeroSlide[] = [
   },
 ];
 
-export default function Hero({ slides = defaultSlides, autoPlayInterval = 6000 }: HeroProps) {
+// Clases estáticas (JIT): tono del overlay configurable desde Ajustes,
+// intensidad suave/medio/fuerte → 40/55/70. En hover siempre baja a /20.
+const OVERLAYS: Record<string, Record<string, string>> = {
+  black: {
+    suave: 'bg-black/40 group-hover:bg-black/20',
+    medio: 'bg-black/55 group-hover:bg-black/20',
+    fuerte: 'bg-black/70 group-hover:bg-black/20',
+  },
+  navy: {
+    suave: 'bg-navy/40 group-hover:bg-navy/20',
+    medio: 'bg-navy/55 group-hover:bg-navy/20',
+    fuerte: 'bg-navy/70 group-hover:bg-navy/20',
+  },
+};
+
+export default function Hero({
+  slides = defaultSlides,
+  autoPlayInterval = 6000,
+  overlayTone = 'black',
+  overlayIntensity = 'medio',
+}: HeroProps) {
   // align:start + altura fija evitan que en móvil la transición se vea "a medias":
   // con min-h el viewport recalculaba su medida a mitad del scroll.
   const [emblaRef, api] = useEmblaCarousel({ loop: true, align: 'start', duration: 20 });
   const [selected, setSelected] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reducedMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
 
   const onSelect = useCallback(() => {
     if (api) setSelected(api.selectedScrollSnap());
@@ -64,28 +90,41 @@ export default function Hero({ slides = defaultSlides, autoPlayInterval = 6000 }
   }, [api, onSelect]);
 
   useEffect(() => {
-    if (!api) return;
+    if (!api || paused || reducedMotion) return;
     // Se reinicia en cada cambio de slide: el autoplay no pisa un arrastre manual.
+    // Pausado en hover (lectura tranquila) y desactivado con reduced-motion.
     const timer = setInterval(() => api.scrollNext(), autoPlayInterval);
     return () => clearInterval(timer);
-  }, [api, autoPlayInterval, selected]);
+  }, [api, autoPlayInterval, selected, paused, reducedMotion]);
 
   return (
-    <section className="relative h-[580px] sm:h-[600px] lg:h-[620px] overflow-hidden font-display" aria-roledescription="carousel">
+    <section
+      className="group relative h-[580px] sm:h-[600px] lg:h-[620px] overflow-hidden font-display"
+      aria-roledescription="carousel"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       <div ref={emblaRef} className="h-full overflow-hidden">
         <div className="flex h-full">
           {slides.map((slide, index) => (
             <div key={index} className="min-w-0 shrink-0 grow-0 basis-full relative h-full" role="group" aria-roledescription="slide">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${slide.image})` }}
+              <img
+                src={slide.image}
+                alt=""
+                aria-hidden="true"
+                loading={index === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                draggable={false}
+                className="absolute inset-0 h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-navy/60" />
+              <div
+                className={`absolute inset-0 transition-colors duration-500 motion-reduce:transition-none ${OVERLAYS[overlayTone]?.[overlayIntensity] ?? OVERLAYS.black.medio}`}
+              />
               <div className="relative z-10 h-full max-w-5xl mx-auto px-4 pb-20 flex flex-col items-center justify-center text-center">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-white leading-tight mb-8 drop-shadow-md">
                   {slide.title}
                 </h1>
-                <p className="text-white/85 mb-6 max-w-2xl">{slide.subtitle}</p>
+                <p className="text-white/85 mb-6 max-w-2xl drop-shadow">{slide.subtitle}</p>
                 {slide.cta && (
                   <a
                     href={slide.cta.href}
