@@ -29,7 +29,10 @@ export default function ClientLogos({
         <p className="text-xs sm:text-sm text-gray-500 max-w-xl mx-auto mb-12">{subtitle}</p>
         <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
           {clients.map((client) => (
-            <div key={client.name} className="flex items-center gap-2">
+            <div
+              key={client.name}
+              className="flex items-center gap-2 grayscale opacity-60 transition duration-300 hover:grayscale-0 hover:opacity-100"
+            >
               {client.icon}
               <div className="text-left leading-none">
                 <span className="block text-sm font-extrabold tracking-tight text-navy">{client.name}</span>
