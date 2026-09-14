@@ -21,6 +21,9 @@ class MediaStorage
             return $path;
         }
 
-        return static::disk()->url($path);
+        // Relativa a propósito: APP_URL no siempre coincide con el host:puerto
+        // real (serve en 8000/8081, XAMPP, túneles). Con "/storage/..." el
+        // navegador resuelve contra el origen actual y la imagen nunca se rompe.
+        return '/storage/'.ltrim($path, '/');
     }
 }

@@ -116,6 +116,29 @@ class AdminProjectTest extends TestCase
         $this->assertSoftDeleted('projects', ['id' => $project->id]);
     }
 
+    public function test_corner_badge_texts_persist_on_create_and_update(): void
+    {
+        $this->actingAs($this->editor)->post('/admin/proyectos', $this->payload([
+            'badge_top' => 'Mercado Mayorista Ecológico',
+            'badge_title' => 'El Milagro',
+        ]))->assertRedirect('/admin/proyectos');
+
+        $project = Project::where('slug', 'hanan-del-sol')->firstOrFail();
+        $translation = $project->translations()->where('locale', 'es')->firstOrFail();
+        $this->assertSame('Mercado Mayorista Ecológico', $translation->badge_top);
+        $this->assertSame('El Milagro', $translation->badge_title);
+
+        $this->actingAs($this->editor)->put("/admin/proyectos/{$project->id}", $this->payload([
+            'slug' => $project->slug,
+            'badge_top' => 'Condominio Exclusivo',
+            'badge_title' => 'Hanan',
+        ]))->assertRedirect('/admin/proyectos');
+
+        $translation->refresh();
+        $this->assertSame('Condominio Exclusivo', $translation->badge_top);
+        $this->assertSame('Hanan', $translation->badge_title);
+    }
+
     public function test_comercial_can_view_but_cannot_mutate(): void
     {
         $this->actingAs($this->editor)->post('/admin/proyectos', $this->payload());

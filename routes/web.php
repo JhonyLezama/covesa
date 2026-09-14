@@ -16,6 +16,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProjectLeadController;
 use App\Http\Controllers\PublicProjectController;
 use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,8 @@ Route::get('/nosotros', [AboutController::class, 'index'])->name('nosotros');
 Route::get('/servicios', [ServiceController::class, 'index'])->name('servicios');
 // Landing mínima pública del proyecto (los badges flotantes apuntan aquí).
 Route::get('/proyectos/{slug}', [PublicProjectController::class, 'show'])->name('proyectos.show');
+// Formulario "Adquiere tu puesto" → leads con source=landing_proyecto + extra_data.
+Route::post('/proyectos/{slug}/leads', [ProjectLeadController::class, 'store'])->name('proyectos.leads.store');
 
 // Auth manual: sin registro público. Los usuarios solo los crea el admin (Día 2) o los seeders.
 Route::middleware('guest')->group(function (): void {
@@ -63,6 +66,10 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function (): v
     Route::get('/proyectos/{proyecto}', [ProjectController::class, 'show'])->name('proyectos.show');
     // Galería polimórfica del proyecto (Semana 3 Día 2): mismo trait que propiedades.
     Route::post('/proyectos/{proyecto}/media', [ProjectMediaController::class, 'store'])->name('proyectos.media.store');
+    // Brochure PDF descargable en la landing pública (Día 3 Semana 5).
+    Route::post('/proyectos/{proyecto}/brochure', [ProjectMediaController::class, 'storeBrochure'])->name('proyectos.brochure.store');
+    // Logo del proyecto para la esquina superior de la landing (ideal del diseño).
+    Route::post('/proyectos/{proyecto}/logo', [ProjectMediaController::class, 'storeLogo'])->name('proyectos.logo.store');
     Route::patch('/proyectos/{proyecto}/media/reorder', [ProjectMediaController::class, 'reorder'])->name('proyectos.media.reorder');
     Route::patch('/proyectos/{proyecto}/media/{media}/featured', [ProjectMediaController::class, 'setFeatured'])->name('proyectos.media.featured');
     Route::delete('/proyectos/{proyecto}/media/{media}', [ProjectMediaController::class, 'destroy'])->name('proyectos.media.destroy');

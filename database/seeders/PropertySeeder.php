@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Project;
 use App\Models\Property;
 use App\Models\PropertyType;
 use App\Models\Status;
@@ -14,6 +15,9 @@ class PropertySeeder extends Seeder
     public function run(): void
     {
         $advisor = User::where('email', 'maria.contreras@covesa.com')->first();
+        // Lotes vinculados a El Milagro para el carrusel de la landing.
+        // El resto queda sin proyecto (fallback a destacadas generales).
+        $milagroId = Project::where('slug', 'el-milagro')->first()?->id;
 
         $properties = [
             [
@@ -23,6 +27,7 @@ class PropertySeeder extends Seeder
                 'zone' => 'carretera-huanchaco',
                 'status' => 'en-venta',
                 'operation' => 'venta',
+                'project' => 'el-milagro',
                 'area_total' => 6692.33,
                 'ideal_for' => ['Almacenes', 'Depósitos', 'Talleres mecánicos'],
                 'description' => 'Terreno comercial en plena carretera a Huanchaco, ideal para almacenes y talleres.',
@@ -36,6 +41,7 @@ class PropertySeeder extends Seeder
                 'zone' => 'barraza',
                 'status' => 'en-venta',
                 'operation' => 'venta',
+                'project' => 'el-milagro',
                 'area_total' => 20070,
                 'lots_available' => 4,
                 'description' => 'Terreno comercial con posibilidad de venta en 4 lotes.',
@@ -61,6 +67,7 @@ class PropertySeeder extends Seeder
                 'zone' => 'av-tupac-amaru',
                 'status' => 'en-alquiler',
                 'operation' => 'alquiler',
+                'project' => 'el-milagro',
                 'area_total' => 2034.81,
                 'lots_available' => 3,
                 'description' => 'Terreno comercial en alquiler sobre Av. Túpac Amaru.',
@@ -94,9 +101,13 @@ class PropertySeeder extends Seeder
         ];
 
         foreach ($properties as $data) {
+            $projectId = isset($data['project'])
+                ? Project::where('slug', $data['project'])->first()?->id ?? $milagroId
+                : null;
             $property = Property::updateOrCreate(
                 ['slug' => $data['slug']],
                 [
+                    'project_id' => $projectId,
                     'property_type_id' => PropertyType::where('slug', $data['type'])->firstOrFail()->id,
                     'zone_id' => Zone::where('slug', $data['zone'])->firstOrFail()->id,
                     'status_id' => Status::where('type', 'property')->where('slug', $data['status'])->firstOrFail()->id,

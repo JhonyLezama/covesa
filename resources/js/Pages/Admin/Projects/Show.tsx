@@ -1,5 +1,6 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+import type { FormEvent } from 'react';
 import AdminLayout from '../../../Layouts/AdminLayout';
 
 interface AssociatedProperty {
@@ -23,14 +24,22 @@ interface ShowProps {
     zone?: string;
     status: { name: string; color: string } | null;
     media_count: number;
+    logo_url: string | null;
   };
   properties: AssociatedProperty[];
   canEdit: boolean;
+  flash?: { success?: string };
   [key: string]: unknown;
 }
 
 export default function Show() {
-  const { project, properties, canEdit } = usePage<ShowProps>().props;
+  const { project, properties, canEdit, flash } = usePage<ShowProps>().props;
+  const { data, setData, post, processing, errors } = useForm<{ logo: File | null }>({ logo: null });
+
+  const submitLogo = (e: FormEvent) => {
+    e.preventDefault();
+    post(route('admin.proyectos.logo.store', project.id), { forceFormData: true });
+  };
 
   return (
     <AdminLayout>
@@ -63,6 +72,41 @@ export default function Show() {
             Editar proyecto
           </Link>
         )}
+      </div>
+
+      <h2 className="mb-3 text-lg font-medium text-gray-text">
+        Logo de la esquina superior
+      </h2>
+
+      <div className="mb-8 max-w-2xl rounded-xl bg-white p-6 shadow">
+        {flash?.success && (
+          <p className="mb-3 rounded-lg bg-green-50 px-4 py-2 text-sm text-green-700">{flash.success}</p>
+        )}
+        {project.logo_url ? (
+          <img src={project.logo_url} alt={`Logo ${project.name}`} className="mb-3 h-16 w-auto rounded-lg bg-slate-900 px-2 py-1" />
+        ) : (
+          <p className="mb-3 text-sm text-gray-muted">
+            Sin logo: la landing muestra el distintivo de icono + texto (campos “Esquina superior” en Editar proyecto).
+          </p>
+        )}
+        {canEdit && (
+          <form onSubmit={submitLogo} className="flex items-center gap-3 flex-wrap">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setData('logo', e.target.files?.[0] ?? null)}
+              className="text-sm text-gray-muted"
+            />
+            <button
+              type="submit"
+              disabled={processing || data.logo === null}
+              className="rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy-dark disabled:opacity-60"
+            >
+              {processing ? 'Subiendo…' : 'Subir logo'}
+            </button>
+          </form>
+        )}
+        {errors?.logo && <p className="mt-1 text-sm text-red-600">{errors.logo}</p>}
       </div>
 
       <h2 className="mb-3 text-lg font-medium text-gray-text">

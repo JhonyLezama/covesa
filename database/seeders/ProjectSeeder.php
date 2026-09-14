@@ -28,14 +28,16 @@ class ProjectSeeder extends Seeder
                 'zone' => $trujillo->id,
                 'client_name' => 'Aspromermet',
                 'service_type' => 'Project Management',
-                'cover' => 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1200&q=80',
+                'cover' => 'https://images.unsplash.com/photo-1777049645587-98ba4bfbe4e6?w=1600&q=80',
                 'gallery' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80',
                 'translation' => [
                     'locale' => 'es',
                     'title' => 'Mercado Mayorista Ecológico El Milagro',
                     'subtitle' => 'Frente al Óvalo El Milagro',
-                    'description' => 'Actualmente llevamos a cabo el servicio de **PROJECT MANAGEMENT** del nuevo Mercado Mayorista Ecológico El Milagro, para **Aspromermet**, un proyecto emblemático para La Libertad y el norte del Perú.',
-                    'features' => ['Ubicación estratégica', 'Infraestructura moderna', 'Seguridad permanente'],
+                    'badge_top' => 'Mercado Mayorista Ecológico',
+                    'badge_title' => 'El Milagro',
+                    'description' => 'Somos el nuevo referente comercial de La Libertad. Con **18 hectáreas** estratégicamente ubicadas frente al Óvalo El Milagro, te ofrecemos más de **1,700 puestos mayoristas**, cada uno con **título de propiedad** independiente y **registro público**. Asegura tu patrimonio en un complejo sostenible con energía solar, diseño moderno y áreas financieras.',
+                    'features' => ['Zona Minorista', 'Zona Mayorista', 'Zona Financiera', 'Zona Comercial 1', 'Zona Comercial 2'],
                 ],
             ],
             [
@@ -135,7 +137,9 @@ class ProjectSeeder extends Seeder
                 $data['translation']
             );
 
-            // Solo registro + imagen alternativa externa. No pisar galería manual.
+            // Solo registro + imagen alternativa externa. No pisar galería manual:
+            // si la portada aún es hotlink demo (http), se refresca a la del
+            // seeder; si el admin ya subió fotos reales (path local), no tocar.
             if (! $project->media()->exists()) {
                 $project->media()->create([
                     'type' => 'featured',
@@ -153,6 +157,11 @@ class ProjectSeeder extends Seeder
                     'order' => 1,
                     'alt_text' => $data['name'],
                 ]);
+            } else {
+                $featured = $project->media()->where('type', 'featured')->first();
+                if ($featured && str_starts_with($featured->path, 'http')) {
+                    $featured->update(['path' => $data['cover'], 'alt_text' => $data['name']]);
+                }
             }
         }
     }

@@ -38,6 +38,9 @@ class ProjectRequest extends FormRequest
             // Contenido en español (único idioma hasta Semana 7).
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:500'],
+            // Esquina superior de la landing (distintivo del proyecto).
+            'badge_top' => ['nullable', 'string', 'max:100'],
+            'badge_title' => ['nullable', 'string', 'max:100'],
             'description' => ['required', 'string'],
             'features_text' => ['nullable', 'string'],
         ];
@@ -55,6 +58,8 @@ class ProjectRequest extends FormRequest
             'video_url' => 'URL del video',
             'title' => 'título (ES)',
             'subtitle' => 'subtítulo (ES)',
+            'badge_top' => 'línea pequeña (ES)',
+            'badge_title' => 'línea grande (ES)',
             'description' => 'descripción (ES)',
         ];
     }

@@ -9,6 +9,7 @@ class ProjectTranslation extends Model
 {
     protected $fillable = [
         'project_id', 'locale', 'title', 'subtitle',
+        'badge_top', 'badge_title',
         'description', 'features', 'meta_title', 'meta_description',
     ];
 

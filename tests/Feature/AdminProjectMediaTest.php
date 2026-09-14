@@ -114,6 +114,31 @@ class AdminProjectMediaTest extends TestCase
         Storage::disk('public')->assertMissing($path);
     }
 
+    public function test_project_logo_upload_replaces_previous(): void
+    {
+        $this->actingAs($this->editor)->post("/admin/proyectos/{$this->project->id}/logo", [
+            'logo' => UploadedFile::fake()->image('logo.png'),
+        ])->assertSessionHasNoErrors();
+
+        $logo = $this->project->media()->where('type', 'logo')->firstOrFail();
+        $this->assertStringStartsWith("projects/{$this->project->id}/", $logo->path);
+        Storage::disk('public')->assertExists($logo->path);
+
+        // Subir otro reemplaza al anterior (registro + archivo).
+        $oldPath = $logo->path;
+        $this->actingAs($this->editor)->post("/admin/proyectos/{$this->project->id}/logo", [
+            'logo' => UploadedFile::fake()->image('logo2.png'),
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame(1, $this->project->media()->where('type', 'logo')->count());
+        Storage::disk('public')->assertMissing($oldPath);
+
+        // El comercial no puede subir logo.
+        $this->actingAs($this->comercial)->post("/admin/proyectos/{$this->project->id}/logo", [
+            'logo' => UploadedFile::fake()->image('logo3.png'),
+        ])->assertForbidden();
+    }
+
     public function test_project_media_rejects_other_parents_media_and_comercial(): void
     {
         $other = $this->project->media()->create(['type' => 'gallery', 'path' => 'x.jpg', 'order' => 0]);

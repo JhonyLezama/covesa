@@ -26,6 +26,8 @@ interface EditProject {
   is_published: boolean;
   title: string;
   subtitle: string | null;
+  badge_top: string | null;
+  badge_title: string | null;
   description: string | null;
   features_text: string | null;
 }
@@ -63,6 +65,8 @@ export default function Form() {
     is_published: project?.is_published ?? false,
     title: project?.title ?? '',
     subtitle: project?.subtitle ?? '',
+    badge_top: project?.badge_top ?? '',
+    badge_title: project?.badge_title ?? '',
     description: project?.description ?? '',
     features_text: project?.features_text ?? '',
   });
@@ -186,6 +190,20 @@ export default function Form() {
             <input id="subtitle" value={data.subtitle} onChange={(e) => setData('subtitle', e.target.value)} className={inputClass} />
             {errors?.subtitle && <p className={errorClass}>{errors.subtitle}</p>}
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="badge_top" className={labelClass}>Esquina superior · línea pequeña</label>
+              <input id="badge_top" placeholder="Mercado Mayorista Ecológico" value={data.badge_top} onChange={(e) => setData('badge_top', e.target.value)} className={inputClass} />
+              {errors?.badge_top && <p className={errorClass}>{errors.badge_top}</p>}
+            </div>
+            <div>
+              <label htmlFor="badge_title" className={labelClass}>Esquina superior · línea grande</label>
+              <input id="badge_title" placeholder="EL MILAGRO" value={data.badge_title} onChange={(e) => setData('badge_title', e.target.value)} className={inputClass} />
+              {errors?.badge_title && <p className={errorClass}>{errors.badge_title}</p>}
+            </div>
+          </div>
+          <p className="-mt-2 text-xs text-gray-muted">Distintivo de la esquina superior de la landing. Si el proyecto tiene logo subido, el logo manda.</p>
 
           <div>
             <label htmlFor="description" className={labelClass}>Descripción *</label>

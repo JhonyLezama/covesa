@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Apple, ChevronLeft, ChevronRight } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { cn } from '../lib/utils';
 
@@ -8,6 +8,10 @@ interface HeroSlide {
   title: string;
   subtitle: string;
   cta?: { label: string; href: string };
+  kind?: 'image' | 'youtube';
+  playlistId?: string;
+  poster?: string;
+  badge?: { title: string; subtitle: string };
 }
 
 interface HeroProps {
@@ -26,9 +30,14 @@ const defaultSlides: HeroSlide[] = [
   },
   {
     image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1600&q=80',
-    title: 'Proyectos que transforman ciudades',
-    subtitle: 'Terrenos comerciales, industriales y locales en las mejores ubicaciones.',
-    cta: { label: 'Más información', href: '#propiedades' },
+    title: 'Mercado Mayorista Ecológico El Milagro',
+    subtitle: 'Tu oportunidad de hacer crecer tu negocio en el polo mayorista del norte.',
+    cta: { label: 'Más información', href: '/proyectos/el-milagro' },
+    kind: 'youtube',
+    // Temporal: playlist oficial del proyecto. Reemplazar por el video final.
+    playlistId: 'PLXp2mXQ4mFlzzE9S3coHpWCh5RPvBD1T0',
+    poster: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1600&q=80',
+    badge: { title: 'El Milagro', subtitle: 'Mercado Mayorista Ecológico' },
   },
   {
     image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80',
@@ -108,18 +117,60 @@ export default function Hero({
         <div className="flex h-full">
           {slides.map((slide, index) => (
             <div key={index} className="min-w-0 shrink-0 grow-0 basis-full relative h-full" role="group" aria-roledescription="slide">
-              <img
-                src={slide.image}
-                alt=""
-                aria-hidden="true"
-                loading={index === 0 ? 'eager' : 'lazy'}
-                decoding="async"
-                draggable={false}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
+              {slide.kind === 'youtube' ? (
+                <>
+                  <img
+                    src={slide.poster ?? slide.image}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    draggable={false}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  {/* El iframe solo vive en el slide activo: al salir se
+                      desmonta (= se pausa) y no consume datos. Sin autoplay
+                      con reduced-motion: queda el póster. */}
+                  {index === selected && !reducedMotion && slide.playlistId && (
+                    <iframe
+                      key={slide.playlistId}
+                      title={slide.title}
+                      src={`https://www.youtube-nocookie.com/embed/videoseries?list=${slide.playlistId}&autoplay=1&mute=1&loop=1&controls=0&modestbranding=1&rel=0&playsinline=1`}
+                      allow="autoplay; encrypted-media; picture-in-picture"
+                      className="absolute left-1/2 top-1/2 aspect-video min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
+                      loading="lazy"
+                    />
+                  )}
+                </>
+              ) : (
+                <img
+                  src={slide.image}
+                  alt=""
+                  aria-hidden="true"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  draggable={false}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              )}
               <div
                 className={`absolute inset-0 transition-colors duration-500 motion-reduce:transition-none ${OVERLAYS[overlayTone]?.[overlayIntensity] ?? OVERLAYS.black.medio}`}
               />
+              {slide.badge && (
+                <div className="absolute top-6 left-4 sm:left-8 z-20 grid gap-1.5">
+                  <span className="inline-flex items-center gap-2 rounded-md bg-el-milagro px-3 py-1.5 text-white shadow-md">
+                    <Apple size={16} aria-hidden="true" />
+                    <span className="text-left leading-tight">
+                      <span className="block text-[9px] font-medium uppercase tracking-wider opacity-90">
+                        {slide.badge.subtitle}
+                      </span>
+                      <span className="block text-xs font-extrabold uppercase tracking-wide">
+                        {slide.badge.title}
+                      </span>
+                    </span>
+                  </span>
+                </div>
+              )}
               <div className="relative z-10 h-full max-w-5xl mx-auto px-4 pb-20 flex flex-col items-center justify-center text-center">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-white leading-tight mb-8 drop-shadow-md">
                   {slide.title}

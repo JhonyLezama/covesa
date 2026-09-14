@@ -1,12 +1,19 @@
 import { Head, usePage } from '@inertiajs/react';
 import PublicLayout from '../../Layouts/PublicLayout';
 import Breadcrumb from '../../Components/Breadcrumb';
+import ElMilagroHero from '../../Components/Project/ElMilagroHero';
+import ProjectFeatures from '../../Components/Project/ProjectFeatures';
+import ProjectLeadForm from '../../Components/Project/ProjectLeadForm';
+import AssociatedCarousel from '../../Components/Project/AssociatedCarousel';
 import { renderHighlights } from '../../lib/highlights';
+import type { Property } from '../../types';
 
 interface PublicProjectProps {
   project: {
+    slug: string;
     name: string;
     client_name: string | null;
+    client?: { name: string | null; logo_url: string | null };
     service_type: string | null;
     zone?: string;
     status: { name: string; color: string } | null;
@@ -14,14 +21,46 @@ interface PublicProjectProps {
     subtitle: string | null;
     description: string | null;
     features: string[];
+    hero_image: string | null;
+    brochure_url: string | null;
+    logo_url: string | null;
+    badge: { top: string | null; title: string };
     gallery: string[];
+    properties: Property[];
   };
   settings?: Record<string, string | null>;
+  flash?: { success?: string };
+  errors?: Record<string, string>;
   [key: string]: unknown;
 }
 
 export default function Show() {
-  const { project, settings } = usePage<PublicProjectProps>().props;
+  const { project, settings, flash, errors } = usePage<PublicProjectProps>().props;
+
+  if (project.slug === 'el-milagro') {
+    return (
+      <PublicLayout settings={settings}>
+        <Head title={project.title} />
+
+        <ElMilagroHero title={project.title} heroImage={project.hero_image} logoUrl={project.logo_url} badge={project.badge} />
+
+        <ProjectFeatures
+          description={project.description}
+          features={project.features}
+          brochureUrl={project.brochure_url}
+        />
+
+        <ProjectLeadForm
+          projectSlug={project.slug}
+          heroImage={project.hero_image}
+          successMessage={flash?.success}
+          serverErrors={errors}
+        />
+
+        <AssociatedCarousel properties={project.properties} />
+      </PublicLayout>
+    );
+  }
 
   return (
     <PublicLayout settings={settings}>

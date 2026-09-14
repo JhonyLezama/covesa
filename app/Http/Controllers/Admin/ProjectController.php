@@ -82,13 +82,15 @@ class ProjectController extends Controller
 
         $project = DB::transaction(function () use ($data) {
             $project = Project::create([
-                ...collect($data)->except(['title', 'subtitle', 'description', 'features_text', 'slug'])->all(),
+                ...collect($data)->except(['title', 'subtitle', 'badge_top', 'badge_title', 'description', 'features_text', 'slug'])->all(),
                 'slug' => $this->resolveSlug($data['slug'] ?? null, $data['name']),
             ]);
             $project->translations()->create([
                 'locale' => 'es',
                 'title' => $data['title'],
                 'subtitle' => $data['subtitle'] ?? null,
+                'badge_top' => $data['badge_top'] ?? null,
+                'badge_title' => $data['badge_title'] ?? null,
                 'description' => $data['description'],
                 'features' => $this->parseFeatures($data['features_text'] ?? null),
             ]);
@@ -117,6 +119,9 @@ class ProjectController extends Controller
                 'zone' => $proyecto->zone?->name,
                 'status' => $proyecto->status ? ['name' => $proyecto->status->name, 'color' => $proyecto->status->color] : null,
                 'media_count' => $proyecto->media()->count(),
+                'logo_url' => ($logo = $proyecto->media()->where('type', 'logo')->orderByDesc('id')->first())
+                    ? MediaStorage::url($logo->path)
+                    : null,
             ],
             'properties' => $proyecto->properties()->with(['type:id,name', 'zone:id,name', 'status:id,name'])
                 ->orderBy('title')
@@ -156,6 +161,8 @@ class ProjectController extends Controller
                 'is_published' => $proyecto->is_published,
                 'title' => $translation?->title ?? $proyecto->name,
                 'subtitle' => $translation?->subtitle,
+                'badge_top' => $translation?->badge_top,
+                'badge_title' => $translation?->badge_title,
                 'description' => $translation?->description,
                 'features_text' => $translation && is_array($translation->features)
                     ? implode("\n", $translation->features)
@@ -180,7 +187,7 @@ class ProjectController extends Controller
 
         DB::transaction(function () use ($data, $proyecto): void {
             $proyecto->update([
-                ...collect($data)->except(['title', 'subtitle', 'description', 'features_text', 'slug'])->all(),
+                ...collect($data)->except(['title', 'subtitle', 'badge_top', 'badge_title', 'description', 'features_text', 'slug'])->all(),
                 'slug' => $this->resolveSlug($data['slug'] ?? null, $data['name'], $proyecto->id),
             ]);
             $proyecto->translations()->updateOrCreate(
@@ -188,6 +195,8 @@ class ProjectController extends Controller
                 [
                     'title' => $data['title'],
                     'subtitle' => $data['subtitle'] ?? null,
+                    'badge_top' => $data['badge_top'] ?? null,
+                    'badge_title' => $data['badge_title'] ?? null,
                     'description' => $data['description'],
                     'features' => $this->parseFeatures($data['features_text'] ?? null),
                 ]
