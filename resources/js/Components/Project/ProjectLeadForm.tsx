@@ -1,13 +1,20 @@
 import { useForm } from '@inertiajs/react';
 import { route } from 'ziggy-js';
-import { MapPin, CheckCircle } from 'lucide-react';
+import { MapPin, CheckCircle, ExternalLink } from 'lucide-react';
 
 interface ProjectLeadFormProps {
   projectSlug: string;
-  heroImage?: string | null;
   successMessage?: string;
   serverErrors?: Record<string, string>;
 }
+
+// Mercado Mayorista Ecológico El Milagro (híbrido: satélite + calles y nombres).
+const MAP_SRC =
+  'https://maps.google.com/maps?q=Mercado%20Mayorista%20Ecol%C3%B3gico%20El%20Milagro%2C%20Trujillo%2C%20Per%C3%BA&t=h&z=17&ie=UTF8&iwloc=&output=embed';
+
+// Google Maps completo en pestaña nueva (allí sí hay vista 3D con un clic).
+const MAP_3D_URL =
+  'https://www.google.com/maps/search/?api=1&query=Mercado%20Mayorista%20Ecol%C3%B3gico%20El%20Milagro%20Trujillo%20Per%C3%BA&basemap=satellite';
 
 const PUESTO_OPTIONS = [
   'Puesto Zona Minorista',
@@ -22,7 +29,7 @@ const DOC_OPTIONS = ['DNI', 'RUC', 'CE', 'PAS'];
 const inputClass =
   'w-full rounded-lg border-slate-300 py-3 px-4 text-slate-800 placeholder-slate-400 focus:ring-[#2F8F4E] focus:border-[#2F8F4E] shadow-sm text-sm border';
 
-export default function ProjectLeadForm({ projectSlug, heroImage, successMessage, serverErrors }: ProjectLeadFormProps) {
+export default function ProjectLeadForm({ projectSlug, successMessage, serverErrors }: ProjectLeadFormProps) {
   const { data, setData, post, processing, errors, reset } = useForm({
     tipo_puesto: '',
     first_name: '',
@@ -58,28 +65,52 @@ export default function ProjectLeadForm({ projectSlug, heroImage, successMessage
   }
 
   return (
-    <section className="py-14 lg:py-20 bg-white">
+    <section className="relative py-14 lg:py-20 bg-white overflow-x-clip">
+      <img
+        src="/images/el-milagro/ingeniero.png"
+        alt="Ingeniero El Milagro"
+        aria-hidden="true"
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.display = 'none';
+        }}
+        className="pointer-events-none absolute left-0 top-[170px] z-10 hidden h-80 select-none md:block lg:top-[200px] lg:h-[400px] xl:h-[440px]"
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           <div className="lg:col-span-6 flex flex-col items-center">
-            <div className="w-16 h-16 bg-[#2F8F4E] rounded-full flex items-center justify-center text-white mb-6 shadow-lg border-4 border-emerald-100">
-              <MapPin size={32} />
-            </div>
-            <div className="relative w-full max-w-md lg:max-w-lg rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
-              {heroImage ? (
-                <img alt="Ubicación El Milagro" src={heroImage} className="w-full h-[420px] object-cover" loading="lazy" />
-              ) : (
-                <div className="w-full h-[420px] bg-slate-100 flex items-center justify-center text-slate-400 text-sm">
-                  Mapa del proyecto
-                </div>
-              )}
+            <div className="relative w-full max-w-md lg:max-w-lg mt-8">
+              <div className="absolute -top-8 -left-8 z-10 w-16 h-16 bg-[#2F8F4E] rounded-full flex items-center justify-center text-white shadow-lg border-4 border-emerald-100">
+                <MapPin size={32} />
+              </div>
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
+                <iframe
+                  title="Ubicación del proyecto en Google Maps"
+                  src={MAP_SRC}
+                  className="w-full h-[420px] border-0"
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+              <div className="mt-4 text-center">
+                <a
+                  href={MAP_3D_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-navy px-6 py-2 text-xs font-bold uppercase tracking-wide text-navy transition hover:bg-navy hover:text-white"
+                >
+                  <ExternalLink size={14} />
+                  Ver en 3D
+                </a>
+              </div>
             </div>
           </div>
 
           <div className="lg:col-span-6">
             <div className="mb-6">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#2F8F4E] uppercase tracking-tight leading-tight">
-                Adquiere tu puesto en el mercado aquí
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight leading-tight">
+                <span className="text-[#2F8F4E]">Adquiere tu puesto en el</span>{' '}
+                <span className="text-[#e67319]">mercado aquí</span>
               </h2>
               <p className="text-slate-600 mt-2 text-sm sm:text-base">
                 Déjanos tus datos y uno de nuestros asesores se comunicará contigo a la brevedad.

@@ -48,11 +48,11 @@ export default function Show() {
           description={project.description}
           features={project.features}
           brochureUrl={project.brochure_url}
+          image={project.hero_image}
         />
 
         <ProjectLeadForm
           projectSlug={project.slug}
-          heroImage={project.hero_image}
           successMessage={flash?.success}
           serverErrors={errors}
         />
